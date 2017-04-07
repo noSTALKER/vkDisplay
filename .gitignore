@@ -4,6 +4,12 @@
 *.o
 *.obj
 
+#SPIR-V generated files
+*.spv
+
+#Visual Studio folder
+.vs/
+
 # Precompiled Headers
 *.gch
 *.pch
@@ -12,10 +18,6 @@
 *.so
 *.dylib
 *.dll
-
-# Fortran module files
-*.mod
-*.smod
 
 # Compiled Static libraries
 *.lai
