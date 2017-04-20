@@ -143,7 +143,7 @@ InputAttachmentApplication::createResources()
 		vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst);
 
 	//create a image by reading the external image
-	vkDisplay::Image image = createImage("sample.jpg");
+	vkDisplay::Image image = createImage("../images/sample.jpg");
 	mImage = image.image;
 
 	//create a image view
@@ -247,7 +247,7 @@ InputAttachmentApplication::createPipeline()
 	vk::DescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo({}, 1, &descriptorSetLayoutBinding);
 	std::tie(result, mSamplerSetLayout) = mDevice.createDescriptorSetLayout(descriptorSetLayoutCreateInfo);
 
-	std::fstream vertexFile("basic.vert.spv", std::ios::binary | std::ios::in);
+	std::fstream vertexFile("../shaders/InputAttachment/basic.vert.spv", std::ios::binary | std::ios::in);
 	vertexFile.seekg(0, std::ios::end);
 	std::size_t vertexSize = vertexFile.tellg();
 	vertexFile.seekg(0, std::ios::beg);
@@ -257,7 +257,7 @@ InputAttachmentApplication::createPipeline()
 
 	vertexFile.close();
 
-	std::fstream fragmentFile("basic.frag.spv", std::ios::binary | std::ios::in);
+	std::fstream fragmentFile("../shaders/InputAttachment/basic.frag.spv", std::ios::binary | std::ios::in);
 	fragmentFile.seekg(0, std::ios::end);
 	std::size_t fragmentSize = fragmentFile.tellg();
 	fragmentFile.seekg(0, std::ios::beg);
@@ -267,7 +267,7 @@ InputAttachmentApplication::createPipeline()
 
 	fragmentFile.close();
 
-	std::fstream fullscreenFile("fullscreen.frag.spv", std::ios::binary | std::ios::in);
+	std::fstream fullscreenFile("../shaders/InputAttachment/fullscreen.frag.spv", std::ios::binary | std::ios::in);
 	fullscreenFile.seekg(0, std::ios::end);
 	std::size_t fullscreenSize = fullscreenFile.tellg();
 	fullscreenFile.seekg(0, std::ios::beg);
@@ -476,7 +476,7 @@ int main()
 	InputAttachmentApplication application;
 	result = application.createInstance("Input Attachment", VK_MAKE_VERSION(1, 0, 0));
 	result = application.createDevice();
-	application.createWindow(L"Input Attachment", 800, 600);
+	application.createWindow("Input Attachment", 800, 600);
 	result = application.createSwapchain();
 	result = application.createDepthStencilBuffer(vk::Format::eD24UnormS8Uint);
 	result = application.createResources();

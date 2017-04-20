@@ -9,10 +9,7 @@ class alignas(16) Vector4
 public:
 	Vector4(float x, float y, float z, float w)
 	{
-		data.x = x;
-		data.y = y;
-		data.z = z;
-		data.w = w;
+		value = _mm_set_ps(x, y, z, w);
 	}
 
 	Vector4(const Vector4& rhs)

@@ -9,6 +9,11 @@
 
 #Visual Studio folder
 .vs/
+build/
+.vscode/
+install/
+x64/
+CMakeSettings.json
 
 # Precompiled Headers
 *.gch

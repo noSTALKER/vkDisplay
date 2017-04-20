@@ -140,7 +140,7 @@ MultipleSubpassApplication::createResources()
 		vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst);
 
 	//create a image by reading the external image
-	vkDisplay::Image image = createImage("sample.jpg");
+	vkDisplay::Image image = createImage("../images/sample.jpg");
 	mImage = image.image;
 
 	//create a image view
@@ -157,7 +157,7 @@ MultipleSubpassApplication::createResources()
 		vk::SamplerAddressMode::eRepeat,
 		0,
 		VK_TRUE,
-		4,
+		1,
 		VK_FALSE,
 		vk::CompareOp::eNever,
 		0,
@@ -200,7 +200,7 @@ MultipleSubpassApplication::createResources()
 		vk::SamplerAddressMode::eRepeat,
 		0,
 		VK_TRUE,
-		4,
+		1,
 		VK_FALSE,
 		vk::CompareOp::eNever,
 		0,
@@ -262,7 +262,7 @@ MultipleSubpassApplication::createPipeline()
 	vk::DescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo({}, 1, &descriptorSetLayoutBinding);
 	std::tie(result, mDescriptorSetLayout) = mDevice.createDescriptorSetLayout(descriptorSetLayoutCreateInfo);
 
-	std::fstream vertexFile("basic.vert.spv", std::ios::binary | std::ios::in);
+	std::fstream vertexFile("../shaders/MultipleSubpass/basic.vert.spv", std::ios::binary | std::ios::in);
 	vertexFile.seekg(0, std::ios::end);
 	std::size_t vertexSize = vertexFile.tellg();
 	vertexFile.seekg(0, std::ios::beg);
@@ -272,7 +272,7 @@ MultipleSubpassApplication::createPipeline()
 
 	vertexFile.close();
 
-	std::fstream fragmentFile("basic.frag.spv", std::ios::binary | std::ios::in);
+	std::fstream fragmentFile("../shaders/MultipleSubpass/basic.frag.spv", std::ios::binary | std::ios::in);
 	fragmentFile.seekg(0, std::ios::end);
 	std::size_t fragmentSize = fragmentFile.tellg();
 	fragmentFile.seekg(0, std::ios::beg);
@@ -282,7 +282,7 @@ MultipleSubpassApplication::createPipeline()
 
 	fragmentFile.close();
 
-	std::fstream fullscreenFile("fullscreen.frag.spv", std::ios::binary | std::ios::in);
+	std::fstream fullscreenFile("../shaders/MultipleSubpass/fullscreen.frag.spv", std::ios::binary | std::ios::in);
 	fullscreenFile.seekg(0, std::ios::end);
 	std::size_t fullscreenSize = fullscreenFile.tellg();
 	fullscreenFile.seekg(0, std::ios::beg);
@@ -479,7 +479,7 @@ int main()
 	MultipleSubpassApplication application;
 	result = application.createInstance("Multiple Subpass", VK_MAKE_VERSION(1, 0, 0));
 	result = application.createDevice();
-	application.createWindow(L"Multiple Subpass", 800, 600);
+	application.createWindow("Multiple Subpass", 800, 600);
 	result = application.createSwapchain();
 	result = application.createDepthStencilBuffer(vk::Format::eD24UnormS8Uint);
 	result = application.createResources();

@@ -18,12 +18,6 @@
 
 #include "Util/Application.h"
 
-VkBool32 debugReport(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const char* layerPrefix, const char* message, void* userData)
-{
-	std::cout << "Message : " << message << std::endl;
-	return VK_TRUE;
-}
-
 class QuadApplication : public vkDisplay::Application
 {
 public:
@@ -79,7 +73,7 @@ QuadApplication::createPipeline()
 	colorAttribute.offset = 2 * sizeof(float);
 	colorAttribute.binding = vertexBinding.binding;
 
-	std::fstream vertexFile("basic.vert.spv", std::ios::binary | std::ios::in);
+	std::fstream vertexFile("../shaders/Quad/basic.vert.spv", std::ios::binary | std::ios::in);
 	vertexFile.seekg(0, std::ios::end);
 	std::size_t vertexSize = vertexFile.tellg();
 	vertexFile.seekg(0, std::ios::beg);
@@ -89,7 +83,7 @@ QuadApplication::createPipeline()
 
 	vertexFile.close();
 
-	std::fstream fragmentFile("basic.frag.spv", std::ios::binary | std::ios::in);
+	std::fstream fragmentFile("../shaders/Quad/basic.frag.spv", std::ios::binary | std::ios::in);
 	fragmentFile.seekg(0, std::ios::end);
 	std::size_t fragmentSize = fragmentFile.tellg();
 	fragmentFile.seekg(0, std::ios::beg);
@@ -226,7 +220,7 @@ int main()
 	QuadApplication application;
 	result = application.createInstance("Quad", VK_MAKE_VERSION(1, 0, 0));
 	result = application.createDevice();
-	application.createWindow(L"Quad", 800, 600);
+	application.createWindow("Quad", 800, 600);
 	result = application.createSwapchain();
 	result = application.createDepthStencilBuffer(vk::Format::eD24UnormS8Uint);
 	result = application.createResources();

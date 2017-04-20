@@ -1,9 +1,23 @@
 #include "Application.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#include <iostream>
 
 namespace vkDisplay
 {
+VKAPI_ATTR VkBool32 VKAPI_CALL callbackFunction(
+	VkDebugReportFlagsEXT                       flags,
+	VkDebugReportObjectTypeEXT                  objectType,
+	uint64_t                                    object,
+	size_t                                      location,
+	int32_t                                     messageCode,
+	const char*                                 pLayerPrefix,
+	const char*                                 pMessage,
+	void*                                       pUserData)
+{
+	std::cout << pMessage << std::endl;
+	return VK_TRUE;
+}
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
@@ -31,7 +45,7 @@ vk::Result
 Application::createInstance(const std::string& applicationName, uint32_t version)
 {
 	vk::Result result;
-	vk::ApplicationInfo applicationInfo(applicationName.c_str(), version, applicationName.c_str(), version, VK_MAKE_VERSION(1, 0, 37));
+	vk::ApplicationInfo applicationInfo(applicationName.c_str(), version, applicationName.c_str(), version);
 
 	const uint32_t layerCount = 1;
 	const char* layerNames[] = { "VK_LAYER_LUNARG_standard_validation" };
@@ -39,8 +53,19 @@ Application::createInstance(const std::string& applicationName, uint32_t version
 	const uint32_t extensionCount = 3;
 	const char* extensionNames[] = { "VK_KHR_surface", "VK_KHR_win32_surface", "VK_EXT_debug_report" };
 
-	vk::InstanceCreateInfo instanceCreateInfo{ {}, &applicationInfo, layerCount, layerNames, extensionCount, extensionNames};
+	//vk::InstanceCreateInfo instanceCreateInfo{ {}, &applicationInfo, layerCount, layerNames, extensionCount, extensionNames};
+	vk::InstanceCreateInfo instanceCreateInfo{ {}, &applicationInfo, 0, nullptr, 2, extensionNames };
 	std::tie(result, mInstance) = vk::createInstance(instanceCreateInfo);
+
+	auto vkCreateDebugReportCallback = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(mInstance, "vkCreateDebugReportCallbackEXT");
+	VkDebugReportCallbackCreateInfoEXT createInfo = {};
+	createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+	createInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT | VK_DEBUG_REPORT_INFORMATION_BIT_EXT | VK_DEBUG_REPORT_INFORMATION_BIT_EXT | VK_DEBUG_REPORT_DEBUG_BIT_EXT;
+	createInfo.pfnCallback = callbackFunction;
+
+	VkDebugReportCallbackEXT callback;
+	//vkCreateDebugReportCallback(mInstance, &createInfo, nullptr, &callback);
+
 	return result;
 }
 
@@ -82,8 +107,14 @@ Application::createDevice()
 	// get the essential device exntensions
 	const char* deviceExtensionNames[] = { "VK_KHR_swapchain" };
 
+	vk::PhysicalDeviceFeatures deviceFeatures;
+	deviceFeatures.samplerAnisotropy = VK_TRUE;
+	deviceFeatures.fullDrawIndexUint32 = VK_TRUE;
+	deviceFeatures.independentBlend = VK_TRUE;
+	deviceFeatures.shaderResourceMinLod = VK_TRUE;
+
 	//create a logical vulkan device with given queues, layers, extensions and features
-	vk::DeviceCreateInfo deviceCreateInfo({}, 1, &defaultQueueCreateInfo, 0, nullptr, 1, deviceExtensionNames, nullptr);
+	vk::DeviceCreateInfo deviceCreateInfo({}, 1, &defaultQueueCreateInfo, 0, nullptr, 1, deviceExtensionNames, &deviceFeatures);
 	std::tie(result, mDevice) = mPhysicalDevice.createDevice(deviceCreateInfo);
 
 	if (result != vk::Result::eSuccess) {
@@ -100,7 +131,7 @@ Application::createDevice()
 }
 
 bool
-Application::createWindow(const std::wstring& windowName, int width, int height)
+Application::createWindow(const std::string& windowName, int width, int height)
 {
 	//create a window
 	WNDCLASSEX winClass;
@@ -559,15 +590,6 @@ Application::createRenderpass()
 
 	//our renderpass only has a single subpass. Also this renderpass doesn't has a input 
 	vk::SubpassDescription subpassDescription({}, vk::PipelineBindPoint::eGraphics, 0, nullptr, 1, &colorAttachmentRef, nullptr, &depthStencilAttachmentRef, 0, nullptr);
-
-	////specify a subpass dependency
-	//vk::SubpassDependency subpassDependency(VK_SUBPASS_EXTERNAL,
-	//	0,
-	//	vk::PipelineStageFlagBits::eColorAttachmentOutput,
-	//	vk::PipelineStageFlagBits::eColorAttachmentOutput,
-	//	vk::AccessFlags(),
-	//	vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite);
-
 
 	//create a renderpass now with a single subpass with attachments descriptions
 	vk::RenderPassCreateInfo renderpassCreateInfo({}, 2, renderpassAttachments, 1, &subpassDescription, 0, nullptr);

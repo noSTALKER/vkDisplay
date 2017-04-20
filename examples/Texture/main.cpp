@@ -56,7 +56,7 @@ TextureApplication::createResources()
 		sizeof(bufferData),
 		vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst);
 
-	vkDisplay::Image image = createImage("sample.jpg");
+	vkDisplay::Image image = createImage("../images/sample.jpg");
 	mImage = image.image;
 
 	vk::ImageSubresourceRange imageViewRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
@@ -106,11 +106,11 @@ TextureApplication::createPipeline()
 	texCoordAttribute.binding = vertexBinding.binding;
 
 	//
-	vk::DescriptorSetLayoutBinding descriptorSetLayoutBinding{ 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment, nullptr };
+	vk::DescriptorSetLayoutBinding descriptorSetLayoutBinding(0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment, nullptr);
 	vk::DescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo({}, 1, &descriptorSetLayoutBinding);
 	std::tie(result, mDescriptorSetLayout) = mDevice.createDescriptorSetLayout(descriptorSetLayoutCreateInfo);
 
-	std::fstream vertexFile("basic.vert.spv", std::ios::binary | std::ios::in);
+	std::fstream vertexFile("../shaders/Texture/basic.vert.spv", std::ios::binary | std::ios::in);
 	vertexFile.seekg(0, std::ios::end);
 	std::size_t vertexSize = vertexFile.tellg();
 	vertexFile.seekg(0, std::ios::beg);
@@ -120,7 +120,7 @@ TextureApplication::createPipeline()
 
 	vertexFile.close();
 
-	std::fstream fragmentFile("basic.frag.spv", std::ios::binary | std::ios::in);
+	std::fstream fragmentFile("../shaders/Texture/basic.frag.spv", std::ios::binary | std::ios::in);
 	fragmentFile.seekg(0, std::ios::end);
 	std::size_t fragmentSize = fragmentFile.tellg();
 	fragmentFile.seekg(0, std::ios::beg);
@@ -196,7 +196,7 @@ TextureApplication::createCommandBuffers()
 	std::tie(result, mCommandBuffers) = mDevice.allocateCommandBuffers(renderCommandBuffersCreateInfo);
 
 	vk::DescriptorPoolSize poolSize(vk::DescriptorType::eCombinedImageSampler, 1);
-	vk::DescriptorPoolCreateInfo descriptorPoolCreateInfo({}, 1, 1, &poolSize);
+	vk::DescriptorPoolCreateInfo descriptorPoolCreateInfo(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, 1, 1, &poolSize);
 
 	vk::DescriptorPool descriptorPool;
 	std::tie(result, descriptorPool) = mDevice.createDescriptorPool(descriptorPoolCreateInfo);
@@ -270,7 +270,7 @@ int main()
 	TextureApplication application;
 	result = application.createInstance("Texture", VK_MAKE_VERSION(1, 0, 0));
 	result = application.createDevice();
-	application.createWindow(L"Texture", 800, 600);
+	application.createWindow("Texture", 800, 600);
 	result = application.createSwapchain();
 	result = application.createDepthStencilBuffer(vk::Format::eD24UnormS8Uint);
 	result = application.createResources();

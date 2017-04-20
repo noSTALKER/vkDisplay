@@ -34,7 +34,7 @@ public:
 	~Application();
 	vk::Result createInstance(const std::string& applicationName, uint32_t version);
 	vk::Result createDevice();
-	bool createWindow(const std::wstring& windowName, int width, int height);
+	bool createWindow(const std::string& windowName, int width, int height);
 	vk::Result createSwapchain();
 	vk::Result createDepthStencilBuffer(vk::Format format);
 	vk::Buffer createBuffer(void* data, uint64_t dataSize, vk::BufferUsageFlags bufferFlags);
