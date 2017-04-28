@@ -15,10 +15,12 @@
 #include <windows.h>
 #include <functional>
 
+#include "Export.h"
+
 namespace vkDisplay
 {
 
-struct _declspec(dllexport) Image
+struct UTIL_API Image
 {
 	vk::Image image;
 	vk::Format format;
@@ -27,7 +29,7 @@ struct _declspec(dllexport) Image
 	uint32_t depth;
 };
 
-class _declspec(dllexport) Application
+class UTIL_API Application
 {
 public:
 	Application();
@@ -37,7 +39,8 @@ public:
 	bool createWindow(const std::string& windowName, int width, int height);
 	vk::Result createSwapchain();
 	vk::Result createDepthStencilBuffer(vk::Format format);
-	vk::Buffer createBuffer(void* data, uint64_t dataSize, vk::BufferUsageFlags bufferFlags);
+	vk::Buffer CreateCoherantBuffer(void * data, uint64_t dataSize, vk::BufferUsageFlags bufferFlags);
+	vk::Buffer createDeviceBuffer(void* data, uint64_t dataSize, vk::BufferUsageFlags bufferFlags);
 	Image createImage(const std::string& filename);
 	vk::DeviceMemory allocateMemory(const vk::MemoryRequirements& requirements, vk::MemoryPropertyFlags flags);
 	vk::CommandBuffer beginSingleTimeCommandBuffer();

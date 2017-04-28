@@ -1,6 +1,6 @@
 file(GLOB TEXTURE_SOURCE *.cpp)
 file(GLOB TEXTURE_INCLUDE *.h)
-file(GLOB TEXTURE_SHADERS "${VKDISPLAY_SHADER_DIR}/Texture/basic.vert" "${VKDISPLAY_SHADER_DIR}/Texture/basic.frag")
+file(GLOB TEXTURE_SHADERS "${VKDISPLAY_SHADER_DIR}/Texture/*.vert" "${VKDISPLAY_SHADER_DIR}/Texture/*.frag")
 file(GLOB TEXTURE_IMAGES "${VKDISPLAY_IMAGE_DIR}/sample.jpg")
 
 include_directories(${Vulkan_INCLUDE_DIR} ${VKDISPLAY_INCLUDE_DIR})

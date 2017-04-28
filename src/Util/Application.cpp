@@ -53,18 +53,18 @@ Application::createInstance(const std::string& applicationName, uint32_t version
 	const uint32_t extensionCount = 3;
 	const char* extensionNames[] = { "VK_KHR_surface", "VK_KHR_win32_surface", "VK_EXT_debug_report" };
 
-	//vk::InstanceCreateInfo instanceCreateInfo{ {}, &applicationInfo, layerCount, layerNames, extensionCount, extensionNames};
-	vk::InstanceCreateInfo instanceCreateInfo{ {}, &applicationInfo, 0, nullptr, 2, extensionNames };
+	vk::InstanceCreateInfo instanceCreateInfo{ {}, &applicationInfo, layerCount, layerNames, extensionCount, extensionNames};
 	std::tie(result, mInstance) = vk::createInstance(instanceCreateInfo);
 
 	auto vkCreateDebugReportCallback = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(mInstance, "vkCreateDebugReportCallbackEXT");
 	VkDebugReportCallbackCreateInfoEXT createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
-	createInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT | VK_DEBUG_REPORT_INFORMATION_BIT_EXT | VK_DEBUG_REPORT_INFORMATION_BIT_EXT | VK_DEBUG_REPORT_DEBUG_BIT_EXT;
+	//createInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT | VK_DEBUG_REPORT_INFORMATION_BIT_EXT | VK_DEBUG_REPORT_DEBUG_BIT_EXT;
+	createInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
 	createInfo.pfnCallback = callbackFunction;
 
 	VkDebugReportCallbackEXT callback;
-	//vkCreateDebugReportCallback(mInstance, &createInfo, nullptr, &callback);
+	vkCreateDebugReportCallback(mInstance, &createInfo, nullptr, &callback);
 
 	return result;
 }
@@ -348,7 +348,41 @@ vk::Result Application::createDepthStencilBuffer(vk::Format format)
 	return result;
 }
 
-vk::Buffer Application::createBuffer(void* data, uint64_t dataSize, vk::BufferUsageFlags bufferFlags)
+vk::Buffer
+Application::CreateCoherantBuffer(void* data, uint64_t dataSize, vk::BufferUsageFlags bufferFlags)
+{
+	vk::Result result;
+
+	//create a common buffer for quad vertices, colors and indices
+	vk::BufferCreateInfo bufferInfo({},
+		dataSize,
+		bufferFlags,
+		vk::SharingMode::eExclusive,
+		0,
+		nullptr);
+	vk::Buffer buffer;
+	std::tie(result, buffer) = mDevice.createBuffer(bufferInfo);
+
+	//get the memory requirement for the depth-stencil image
+	auto bufferMemoryRequirement = mDevice.getBufferMemoryRequirements(buffer);
+
+	//find the memory and allocate it on Device local memory
+	vk::DeviceMemory bufferMemory = allocateMemory(bufferMemoryRequirement, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+
+	//fill the stage buffer memory with vertex data
+	void* bufferData;
+	std::tie(result, bufferData) = mDevice.mapMemory(bufferMemory, 0, dataSize);
+	std::memcpy(bufferData, data, dataSize);
+	mDevice.unmapMemory(bufferMemory);
+
+	//bind the quad buffer to the allocated memory
+	mDevice.bindBufferMemory(buffer, bufferMemory, 0);
+
+	return buffer;
+}
+
+vk::Buffer 
+Application::createDeviceBuffer(void* data, uint64_t dataSize, vk::BufferUsageFlags bufferFlags)
 {
 	vk::Result result;
 	//create a stage buffer to tranfer data from host to device
@@ -368,7 +402,7 @@ vk::Buffer Application::createBuffer(void* data, uint64_t dataSize, vk::BufferUs
 	//Allocate memory for quad buffer in the desired memory type
 	vk::DeviceMemory stageBufferMemory = allocateMemory(stageBufferMemoryRequirement, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
-	//fill the stage buffer memory with vertex data
+	//fill the stage buffer memory with given data
 	void* bufferData;
 	std::tie(result, bufferData) = mDevice.mapMemory(stageBufferMemory, 0, dataSize);
 	std::memcpy(bufferData, data, dataSize);
@@ -377,24 +411,24 @@ vk::Buffer Application::createBuffer(void* data, uint64_t dataSize, vk::BufferUs
 	//bind the allocated momory to the stage buffer
 	mDevice.bindBufferMemory(stageBuffer, stageBufferMemory, 0);
 
-	//create a common buffer for quad vertices, colors and indices
-	vk::BufferCreateInfo quadBufferInfo({},
+	//create a device local buffer
+	vk::BufferCreateInfo bufferInfo({},
 		dataSize,
 		bufferFlags,
 		vk::SharingMode::eExclusive,
 		0,
 		nullptr);
 	vk::Buffer buffer;
-	std::tie(result, buffer) = mDevice.createBuffer(quadBufferInfo);
+	std::tie(result, buffer) = mDevice.createBuffer(bufferInfo);
 
 	//get the memory requirement for the depth-stencil image
 	auto bufferMemoryRequirement = mDevice.getBufferMemoryRequirements(buffer);
 
 	//find the memory and allocate it on Device local memory
-	vk::DeviceMemory quadBufferMemory = allocateMemory(bufferMemoryRequirement, vk::MemoryPropertyFlagBits::eDeviceLocal);
+	vk::DeviceMemory bufferMemory = allocateMemory(bufferMemoryRequirement, vk::MemoryPropertyFlagBits::eDeviceLocal);
 
 	//bind the quad buffer to the allocated memory
-	mDevice.bindBufferMemory(buffer, quadBufferMemory, 0);
+	mDevice.bindBufferMemory(buffer, bufferMemory, 0);
 
 	//create a command buffer to transfer data from stage buffer to device local buffer
 	std::vector<vk::CommandBuffer> transferCommandBuffer;
@@ -601,8 +635,12 @@ Application::createRenderpass()
 void 
 Application::renderLoop()
 {
+	double simTime = 0;
+	double previousTime = 0;
+
 	while (true) {
 		render();
+
 	}
 }
 

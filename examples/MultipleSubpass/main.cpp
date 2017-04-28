@@ -135,7 +135,7 @@ MultipleSubpassApplication::createResources()
 		uint32_t indexData[6] = { 0, 2, 1, 0, 3, 2 };
 	} bufferData;
 
-	mTextureBuffer = createBuffer(&bufferData,
+	mTextureBuffer = createDeviceBuffer(&bufferData,
 		sizeof(bufferData),
 		vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst);
 
