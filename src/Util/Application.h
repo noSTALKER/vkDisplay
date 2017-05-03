@@ -29,6 +29,14 @@ struct UTIL_API Image
 	uint32_t depth;
 };
 
+struct UTIL_API Buffer
+{
+	vk::Buffer buffer;
+	vk::DeviceMemory memory;
+	uint64_t offset;
+	uint64_t size;
+};
+
 class UTIL_API Application
 {
 public:
@@ -39,8 +47,8 @@ public:
 	bool createWindow(const std::string& windowName, int width, int height);
 	vk::Result createSwapchain();
 	vk::Result createDepthStencilBuffer(vk::Format format);
-	vk::Buffer CreateCoherantBuffer(void * data, uint64_t dataSize, vk::BufferUsageFlags bufferFlags);
-	vk::Buffer createDeviceBuffer(void* data, uint64_t dataSize, vk::BufferUsageFlags bufferFlags);
+	Buffer createCoherantBuffer(void * data, uint64_t dataSize, vk::BufferUsageFlags bufferFlags);
+	Buffer createDeviceBuffer(void* data, uint64_t dataSize, vk::BufferUsageFlags bufferFlags);
 	Image createImage(const std::string& filename);
 	vk::DeviceMemory allocateMemory(const vk::MemoryRequirements& requirements, vk::MemoryPropertyFlags flags);
 	vk::CommandBuffer beginSingleTimeCommandBuffer();
@@ -50,7 +58,7 @@ public:
 	virtual vk::Result createResources() { return vk::Result::eSuccess; }
 	virtual vk::Result createPipeline() { return vk::Result::eSuccess; }
 	virtual vk::Result createCommandBuffers() { return vk::Result::eSuccess; }
-	virtual void render() {}
+	virtual void render(double frameTime, double totalTime) {}
 	void renderLoop();
 
 	vk::Instance getInstance() const

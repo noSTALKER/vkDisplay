@@ -2,6 +2,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #include <iostream>
+#include <chrono>
 
 namespace vkDisplay
 {
@@ -348,8 +349,8 @@ vk::Result Application::createDepthStencilBuffer(vk::Format format)
 	return result;
 }
 
-vk::Buffer
-Application::CreateCoherantBuffer(void* data, uint64_t dataSize, vk::BufferUsageFlags bufferFlags)
+Buffer
+Application::createCoherantBuffer(void* data, uint64_t dataSize, vk::BufferUsageFlags bufferFlags)
 {
 	vk::Result result;
 
@@ -369,19 +370,28 @@ Application::CreateCoherantBuffer(void* data, uint64_t dataSize, vk::BufferUsage
 	//find the memory and allocate it on Device local memory
 	vk::DeviceMemory bufferMemory = allocateMemory(bufferMemoryRequirement, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
-	//fill the stage buffer memory with vertex data
-	void* bufferData;
-	std::tie(result, bufferData) = mDevice.mapMemory(bufferMemory, 0, dataSize);
-	std::memcpy(bufferData, data, dataSize);
-	mDevice.unmapMemory(bufferMemory);
+	//fill the buffer memory in case data is provided
+	if (data != nullptr) {
+		void* bufferData;
+		std::tie(result, bufferData) = mDevice.mapMemory(bufferMemory, 0, dataSize);
+		std::memcpy(bufferData, data, dataSize);
+		mDevice.unmapMemory(bufferMemory);
+	}
 
 	//bind the quad buffer to the allocated memory
 	mDevice.bindBufferMemory(buffer, bufferMemory, 0);
 
-	return buffer;
+	Buffer info;
+	info.buffer = buffer;
+	info.memory = bufferMemory;
+	info.size = dataSize;
+	info.offset = 0;
+
+	return info;
+
 }
 
-vk::Buffer 
+Buffer 
 Application::createDeviceBuffer(void* data, uint64_t dataSize, vk::BufferUsageFlags bufferFlags)
 {
 	vk::Result result;
@@ -447,7 +457,13 @@ Application::createDeviceBuffer(void* data, uint64_t dataSize, vk::BufferUsageFl
 	mQueue.submit(1, &transferSubmitInfo, vk::Fence());
 	mQueue.waitIdle();
 
-	return buffer;
+	Buffer info;
+	info.buffer = buffer;
+	info.memory = bufferMemory;
+	info.size = dataSize;
+	info.offset = 0;
+
+	return info;
 }
 
 Image 
@@ -635,12 +651,18 @@ Application::createRenderpass()
 void 
 Application::renderLoop()
 {
-	double simTime = 0;
-	double previousTime = 0;
+	std::chrono::duration<double> totalTime = std::chrono::duration<double>::zero();
+	std::chrono::duration<double> frameTime = std::chrono::duration<double>::zero();
+	totalTime.zero();
+	std::chrono::high_resolution_clock clock;
+	auto previousTimePoint = clock.now();
 
 	while (true) {
-		render();
-
+		auto timePoint = clock.now();
+		frameTime = timePoint - previousTimePoint;
+		totalTime += frameTime;
+		render(frameTime.count(), totalTime.count());
+		previousTimePoint = timePoint;
 	}
 }
 

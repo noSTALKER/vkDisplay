@@ -25,10 +25,10 @@ public:
 	vk::Result createResources() override;
 	vk::Result createPipeline() override;
 	vk::Result createCommandBuffers() override;
-	void render() override;
+	void render(double frameTime, double totalTime) override;
 private:
 	std::vector<vk::CommandBuffer> mCommandBuffers;
-	vk::Buffer mQuadBuffer;
+	vkDisplay::Buffer mQuadBuffer;
 	vk::Pipeline mPipeline;
 	vk::Semaphore mRenderFinishSemaphore;
 	vk::Semaphore mImageAquireSemaphore;
@@ -181,8 +181,8 @@ QuadApplication::createCommandBuffers()
 		vk::RenderPassBeginInfo renderpassBeginInfo(mRenderpass, mFramebuffers[i], renderArea, 2, clearValues);
 		commandBuffer.beginRenderPass(renderpassBeginInfo, vk::SubpassContents::eInline);
 		commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, mPipeline);
-		commandBuffer.bindVertexBuffers(0, { mQuadBuffer }, { 0 });
-		commandBuffer.bindIndexBuffer(mQuadBuffer, sizeof(float) * 5 * 4, vk::IndexType::eUint32);
+		commandBuffer.bindVertexBuffers(0, { mQuadBuffer.buffer }, { 0 });
+		commandBuffer.bindIndexBuffer(mQuadBuffer.buffer, sizeof(float) * 5 * 4, vk::IndexType::eUint32);
 		commandBuffer.drawIndexed(6, 1, 0, 0, 0);
 		commandBuffer.endRenderPass();
 		commandBuffer.end();
@@ -196,7 +196,7 @@ QuadApplication::createCommandBuffers()
 }
 
 void
-QuadApplication::render()
+QuadApplication::render(double frameTime, double totalTime)
 {
 	vk::Result result;
 	uint32_t currentSwapchainImage;

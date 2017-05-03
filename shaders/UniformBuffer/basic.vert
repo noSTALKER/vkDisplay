@@ -1,9 +1,13 @@
-#version 440
+#version 450
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
 layout (location = 0) in vec3 position;
 layout (location = 1) in vec2 texCoord;
+
+layout (std140, binding = 0) uniform CubeInfo {
+	mat4 mvp;
+} cubeInfo;
 
 layout (location = 0) out vec2 outTexCoord;
 out gl_PerVertex {
@@ -12,6 +16,7 @@ out gl_PerVertex {
 
 void main()
 {
-	gl_Position = vec4(position.x, position.y, 0.5, 1);
+	vec4 pos = vec4(position, 1.0f);
+	gl_Position = cubeInfo.mvp * pos;
 	outTexCoord = texCoord;
 }

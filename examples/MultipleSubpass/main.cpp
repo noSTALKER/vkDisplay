@@ -27,10 +27,10 @@ public:
 	vk::Result createFramebuffers() override;
 	vk::Result createPipeline() override;
 	vk::Result createCommandBuffers() override;
-	void render() override;
+	void render(double frameTime, double totalTime) override;
 private:
 	std::vector<vk::CommandBuffer> mCommandBuffers;
-	vk::Buffer mTextureBuffer;
+	vkDisplay::Buffer mTextureBuffer;
 	vk::Pipeline mPipeline;
 	vk::PipelineLayout mPipelineLayout;
 	vk::Image mImage;
@@ -434,8 +434,8 @@ MultipleSubpassApplication::createCommandBuffers()
 		vk::RenderPassBeginInfo renderpassBeginInfo(mRenderpass, mFramebuffers[i], renderArea, 3, clearValues);
 		commandBuffer.beginRenderPass(renderpassBeginInfo, vk::SubpassContents::eInline);
 		commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, mPipeline);
-		commandBuffer.bindVertexBuffers(0, { mTextureBuffer }, { 0 });
-		commandBuffer.bindIndexBuffer(mTextureBuffer, sizeof(float) * 4 * 4, vk::IndexType::eUint32);
+		commandBuffer.bindVertexBuffers(0, { mTextureBuffer.buffer }, { 0 });
+		commandBuffer.bindIndexBuffer(mTextureBuffer.buffer, sizeof(float) * 4 * 4, vk::IndexType::eUint32);
 		commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, mPipelineLayout, 0, sets, {});
 		commandBuffer.drawIndexed(6, 1, 0, 0, 0);
 		commandBuffer.nextSubpass(vk::SubpassContents::eInline);
@@ -455,7 +455,7 @@ MultipleSubpassApplication::createCommandBuffers()
 }
 
 void
-MultipleSubpassApplication::render()
+MultipleSubpassApplication::render(double frameTime, double totalTime)
 {
 	vk::Result result;
 	uint32_t currentSwapchainImage;

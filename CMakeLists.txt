@@ -9,7 +9,13 @@ set(VKDISPLAY_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/src")
 set(VKDISPLAY_SHADER_DIR "${CMAKE_SOURCE_DIR}/shaders")
 set(VKDISPLAY_IMAGE_DIR "${CMAKE_SOURCE_DIR}/images")
 
+set(GLM_INCLUDE_DIR "E:/Git/glm")
+
 find_package(Vulkan)
+add_definitions(-DGLM_FORCE_LEFT_HANDED)
+add_definitions(-DGLM_FORCE_DEPTH_ZERO_TO_ONE)
+
+add_definitions(/fp:fast)
 
 add_subdirectory(src)
 add_subdirectory(examples)
