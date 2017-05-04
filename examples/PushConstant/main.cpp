@@ -22,10 +22,10 @@
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-class PushConstant : public vkDisplay::Application
+class PushConstantApplication : public vkDisplay::Application
 {
 public:
-	PushConstant() {}
+	PushConstantApplication() {}
 	vk::Result createResources() override;
 	vk::Result createPipeline() override;
 	vk::Result createCommandBuffers() override;
@@ -44,7 +44,7 @@ private:
 };
 
 vk::Result
-PushConstant::createResources()
+PushConstantApplication::createResources()
 {
 	vk::Result result;
 
@@ -129,7 +129,7 @@ PushConstant::createResources()
 }
 
 vk::Result
-PushConstant::createPipeline()
+PushConstantApplication::createPipeline()
 {
 	vk::Result result;
 	vk::VertexInputBindingDescription vertexBinding(0, sizeof(float) * 5, vk::VertexInputRate::eVertex);
@@ -203,7 +203,7 @@ PushConstant::createPipeline()
 	vk::PushConstantRange pushConstantRange{ vk::ShaderStageFlagBits::eVertex, 0, sizeof(glm::mat4x4) };
 
 	//viewport info
-	vk::Viewport viewport(0, 0, mSwapchainExtent.width, mSwapchainExtent.height, 0.0f, 1.0f);
+	vk::Viewport viewport(0, 0, static_cast<float>(mSwapchainExtent.width), static_cast<float>(mSwapchainExtent.height), 0.0f, 1.0f);
 	vk::Rect2D scissor({ 0, 0 }, mSwapchainExtent);
 	vk::PipelineViewportStateCreateInfo viewportInfo({}, 1, &viewport, 1, &scissor);
 
@@ -233,7 +233,7 @@ PushConstant::createPipeline()
 }
 
 vk::Result
-PushConstant::createCommandBuffers()
+PushConstantApplication::createCommandBuffers()
 {
 	vk::Result result;
 
@@ -307,7 +307,7 @@ PushConstant::createCommandBuffers()
 }
 
 void
-PushConstant::render(double frameTime, double totalTime)
+PushConstantApplication::render(double frameTime, double totalTime)
 {
 	vk::Result result;
 
@@ -329,7 +329,7 @@ int main()
 	int width = 800, height = 600;
 	vk::Result result;
 
-	PushConstant application;
+	PushConstantApplication application;
 	result = application.createInstance("Push Constant", VK_MAKE_VERSION(1, 0, 0));
 	result = application.createDevice();
 	application.createWindow("Push Constant", 800, 600);
