@@ -22,10 +22,10 @@
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-class UniformBufferApplication : public vkDisplay::Application
+class PushConstant : public vkDisplay::Application
 {
 public:
-	UniformBufferApplication() {}
+	PushConstant() {}
 	vk::Result createResources() override;
 	vk::Result createPipeline() override;
 	vk::Result createCommandBuffers() override;
@@ -33,7 +33,6 @@ public:
 private:
 	std::vector<vk::CommandBuffer> mCommandBuffers;
 	vkDisplay::Buffer mCubeBuffer;
-	vkDisplay::Buffer mUniformBuffer;
 	vk::Pipeline mPipeline;
 	vk::PipelineLayout mPipelineLayout;
 	vk::Image mImage;
@@ -42,15 +41,12 @@ private:
 	vk::DescriptorSetLayout mDescriptorSetLayout;
 	vk::Semaphore mRenderFinishSemaphore;
 	vk::Semaphore mImageAquireSemaphore;
-	glm::mat4x4 mMVP;
 };
 
 vk::Result
-UniformBufferApplication::createResources()
+PushConstant::createResources()
 {
 	vk::Result result;
-
-	mUniformBuffer = createCoherantBuffer(&mMVP, sizeof(mMVP), vk::BufferUsageFlagBits::eUniformBuffer);
 
 	//buffer data
 	struct BufferData {
@@ -133,7 +129,7 @@ UniformBufferApplication::createResources()
 }
 
 vk::Result
-UniformBufferApplication::createPipeline()
+PushConstant::createPipeline()
 {
 	vk::Result result;
 	vk::VertexInputBindingDescription vertexBinding(0, sizeof(float) * 5, vk::VertexInputRate::eVertex);
@@ -152,24 +148,11 @@ UniformBufferApplication::createPipeline()
 	texCoordAttribute.offset = 3 * sizeof(float);
 	texCoordAttribute.binding = vertexBinding.binding;
 
-	//
-	vk::DescriptorSetLayoutBinding descriptorSetLayoutBinding[2];
-	vk::DescriptorSetLayoutBinding& uniformLayoutBinding = descriptorSetLayoutBinding[0];
-	uniformLayoutBinding.binding = 0;
-	uniformLayoutBinding.descriptorType = vk::DescriptorType::eUniformBuffer;
-	uniformLayoutBinding.stageFlags = vk::ShaderStageFlagBits::eVertex;
-	uniformLayoutBinding.descriptorCount = 1;
-
-	vk::DescriptorSetLayoutBinding& samplerLayoutBinding = descriptorSetLayoutBinding[1];
-	samplerLayoutBinding.binding = 1;
-	samplerLayoutBinding.descriptorType = vk::DescriptorType::eCombinedImageSampler;
-	samplerLayoutBinding.stageFlags = vk::ShaderStageFlagBits::eFragment;
-	samplerLayoutBinding.descriptorCount = 1;
-	
-	vk::DescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo({}, 2, descriptorSetLayoutBinding);
+	vk::DescriptorSetLayoutBinding samplerLayoutBinding(0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment);
+	vk::DescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo({}, 1, &samplerLayoutBinding);
 	std::tie(result, mDescriptorSetLayout) = mDevice.createDescriptorSetLayout(descriptorSetLayoutCreateInfo);
 
-	std::fstream vertexFile("../shaders/UniformBuffer/basic.vert.spv", std::ios::binary | std::ios::in);
+	std::fstream vertexFile("../shaders/PushConstant/basic.vert.spv", std::ios::binary | std::ios::in);
 	vertexFile.seekg(0, std::ios::end);
 	std::size_t vertexSize = vertexFile.tellg();
 	vertexFile.seekg(0, std::ios::beg);
@@ -179,7 +162,7 @@ UniformBufferApplication::createPipeline()
 
 	vertexFile.close();
 
-	std::fstream fragmentFile("../shaders/UniformBuffer/basic.frag.spv", std::ios::binary | std::ios::in);
+	std::fstream fragmentFile("../shaders/PushConstant/basic.frag.spv", std::ios::binary | std::ios::in);
 	fragmentFile.seekg(0, std::ios::end);
 	std::size_t fragmentSize = fragmentFile.tellg();
 	fragmentFile.seekg(0, std::ios::beg);
@@ -216,6 +199,9 @@ UniformBufferApplication::createPipeline()
 	//input assembly info
 	vk::PipelineInputAssemblyStateCreateInfo inputAssemblyInfo({}, vk::PrimitiveTopology::eTriangleList, VK_FALSE);
 
+	//Push Constant Info
+	vk::PushConstantRange pushConstantRange{ vk::ShaderStageFlagBits::eVertex, 0, sizeof(glm::mat4x4) };
+
 	//viewport info
 	vk::Viewport viewport(0, 0, mSwapchainExtent.width, mSwapchainExtent.height, 0.0f, 1.0f);
 	vk::Rect2D scissor({ 0, 0 }, mSwapchainExtent);
@@ -236,7 +222,7 @@ UniformBufferApplication::createPipeline()
 	vk::PipelineColorBlendStateCreateInfo colorBlendInfo({}, VK_FALSE, vk::LogicOp::eNoOp, 1, &colorBlendAttachment);
 
 	//pipeline layout
-	vk::PipelineLayoutCreateInfo pipelineLayoutCreateInfo({}, 1, &mDescriptorSetLayout, 0, nullptr);
+	vk::PipelineLayoutCreateInfo pipelineLayoutCreateInfo({}, 1, &mDescriptorSetLayout, 1, &pushConstantRange);
 	std::tie(result, mPipelineLayout) = mDevice.createPipelineLayout(pipelineLayoutCreateInfo);
 
 	vk::GraphicsPipelineCreateInfo pipelineCreateInfo({}, 2, shaderStageInfos, &vertexInputInfo, &inputAssemblyInfo, nullptr, &viewportInfo, &rasterizationInfo, &multisampleInfo, &depthStencilInfo, &colorBlendInfo, nullptr, mPipelineLayout, mRenderpass, 0);
@@ -247,23 +233,29 @@ UniformBufferApplication::createPipeline()
 }
 
 vk::Result
-UniformBufferApplication::createCommandBuffers()
+PushConstant::createCommandBuffers()
 {
 	vk::Result result;
+
+	const glm::vec3 eye(0, -2, -5);
+	const glm::vec3 up(0, 1, 0);
+	const glm::vec3 center(0, 0, 0);
+
+	constexpr float angle = glm::radians(45.0f);
+	glm::mat4x4 modelMatrix = glm::rotate(glm::mat4x4(), angle, glm::vec3(0, 1, 0));
+	glm::mat4x4 lookMatrix = glm::lookAt(eye, center, up);
+	glm::mat4x4 projectionMatrix = glm::perspective(glm::radians(60.0f), (float)mSwapchainExtent.width / (float)mSwapchainExtent.height, 1.0f, 100.0f);
+	glm::mat4x4 MVP = projectionMatrix * lookMatrix * modelMatrix;
+
 	//create command buffer equal to the swapchain images
 	vk::CommandBufferAllocateInfo renderCommandBuffersCreateInfo(mCommandPool, vk::CommandBufferLevel::ePrimary, mSwapchainImageViews.size());
 	std::tie(result, mCommandBuffers) = mDevice.allocateCommandBuffers(renderCommandBuffersCreateInfo);
 
-	vk::DescriptorPoolSize poolSize[2];
-	vk::DescriptorPoolSize& uniformPoolSize = poolSize[0];
-	uniformPoolSize.descriptorCount = 1;
-	uniformPoolSize.type = vk::DescriptorType::eUniformBuffer;
-
-	vk::DescriptorPoolSize& samplerPoolSize = poolSize[1];
+	vk::DescriptorPoolSize samplerPoolSize;
 	samplerPoolSize.descriptorCount = 1;
 	samplerPoolSize.type = vk::DescriptorType::eCombinedImageSampler;
 
-	vk::DescriptorPoolCreateInfo descriptorPoolCreateInfo({}, 1, 2, poolSize);
+	vk::DescriptorPoolCreateInfo descriptorPoolCreateInfo({}, 1, 1, &samplerPoolSize);
 
 	vk::DescriptorPool descriptorPool;
 	std::tie(result, descriptorPool) = mDevice.createDescriptorPool(descriptorPoolCreateInfo);
@@ -272,25 +264,8 @@ UniformBufferApplication::createCommandBuffers()
 	std::tie(result, sets) = mDevice.allocateDescriptorSets(allocateInfo);
 
 	vk::DescriptorImageInfo imageInfo(mSampler, mImageView, vk::ImageLayout::eShaderReadOnlyOptimal);
-	vk::DescriptorBufferInfo bufferInfo(mUniformBuffer.buffer, 0, mUniformBuffer.size);
-	vk::WriteDescriptorSet writeDescriptorSet[2];
-	vk::WriteDescriptorSet& bufferWrite = writeDescriptorSet[0];
-	bufferWrite.dstSet = sets[0];
-	bufferWrite.descriptorCount = 1;
-	bufferWrite.dstArrayElement = 0;
-	bufferWrite.dstBinding = 0;
-	bufferWrite.descriptorType = vk::DescriptorType::eUniformBuffer; 
-	bufferWrite.pBufferInfo = &bufferInfo;
-
-	vk::WriteDescriptorSet& samplerWrite = writeDescriptorSet[1];
-	samplerWrite.dstSet = sets[0];
-	samplerWrite.descriptorCount = 1;
-	samplerWrite.dstArrayElement = 0;
-	samplerWrite.dstBinding = 1;
-	samplerWrite.descriptorType = vk::DescriptorType::eCombinedImageSampler;
-	samplerWrite.pImageInfo = &imageInfo;
-
-	mDevice.updateDescriptorSets(2, writeDescriptorSet, 0, nullptr);
+	vk::WriteDescriptorSet samplerWrite(sets[0], 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo);
+	mDevice.updateDescriptorSets(1, &samplerWrite, 0, nullptr);
 
 	//
 	vk::Rect2D renderArea({ 0, 0 }, mSwapchainExtent);
@@ -311,6 +286,9 @@ UniformBufferApplication::createCommandBuffers()
 		vk::CommandBufferBeginInfo commandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eSimultaneousUse, nullptr);
 		commandBuffer.begin(commandBufferBeginInfo);
 
+		//record the push constants
+		commandBuffer.pushConstants(mPipelineLayout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(MVP), &MVP);
+
 		vk::RenderPassBeginInfo renderpassBeginInfo(mRenderpass, mFramebuffers[i], renderArea, 2, clearValues);
 		commandBuffer.beginRenderPass(renderpassBeginInfo, vk::SubpassContents::eInline);
 		commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, mPipeline);
@@ -329,23 +307,9 @@ UniformBufferApplication::createCommandBuffers()
 }
 
 void
-UniformBufferApplication::render(double frameTime, double totalTime)
+PushConstant::render(double frameTime, double totalTime)
 {
-	glm::vec3 eye(0, -2, -5);
-	glm::vec3 up(0, 1, 0);
-	glm::vec3 center(0, 0, 0);
-
-	float angle = glm::quarter_pi<float>() * totalTime;
-	glm::mat4x4 modelMatrix = glm::rotate(glm::mat4x4(), angle, glm::vec3(0, 1, 0));
-	glm::mat4x4 lookMatrix = glm::lookAt(eye, center, up);
-	glm::mat4x4 projectionMatrix = glm::perspective(glm::radians(60.0f), (float)mSwapchainExtent.width / (float)mSwapchainExtent.height, 1.0f, 100.0f);
-	mMVP = projectionMatrix * lookMatrix * modelMatrix;
-
-	void* data;
 	vk::Result result;
-	std::tie(result, data) = mDevice.mapMemory(mUniformBuffer.memory, mUniformBuffer.offset, mUniformBuffer.size);
-	memcpy(data, &mMVP, sizeof(mMVP));
-	mDevice.unmapMemory(mUniformBuffer.memory);
 
 	uint32_t currentSwapchainImage;
 	std::tie(result, currentSwapchainImage) = mDevice.acquireNextImageKHR(mSwapchain, 10000000, mImageAquireSemaphore, vk::Fence());
@@ -365,10 +329,10 @@ int main()
 	int width = 800, height = 600;
 	vk::Result result;
 
-	UniformBufferApplication application;
-	result = application.createInstance("Uniform Buffer", VK_MAKE_VERSION(1, 0, 0));
+	PushConstant application;
+	result = application.createInstance("Push Constant", VK_MAKE_VERSION(1, 0, 0));
 	result = application.createDevice();
-	application.createWindow("Uniform Buffer", 800, 600);
+	application.createWindow("Push Constant", 800, 600);
 	result = application.createSwapchain();
 	result = application.createDepthStencilBuffer(vk::Format::eD24UnormS8Uint);
 	result = application.createResources();
