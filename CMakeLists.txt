@@ -22,3 +22,4 @@ add_subdirectory(examples)
 
 install(DIRECTORY images DESTINATION .)
 install(DIRECTORY shaders DESTINATION .)
+install(DIRECTORY models DESTINATION .)

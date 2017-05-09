@@ -37,6 +37,15 @@ struct UTIL_API Buffer
 	uint64_t size;
 };
 
+struct UTIL_API Model
+{
+	std::vector<float> data;
+	std::vector<uint32_t> indices;
+	uint64_t vertexCount;
+	bool hasNormal;
+	bool hasTexCoord;
+};
+
 class UTIL_API Application
 {
 public:
@@ -50,6 +59,7 @@ public:
 	Buffer createCoherantBuffer(void * data, uint64_t dataSize, vk::BufferUsageFlags bufferFlags);
 	Buffer createDeviceBuffer(void* data, uint64_t dataSize, vk::BufferUsageFlags bufferFlags);
 	Image createImage(const std::string& filename);
+	Model createModel(const std::string& filename);
 	vk::DeviceMemory allocateMemory(const vk::MemoryRequirements& requirements, vk::MemoryPropertyFlags flags);
 	vk::CommandBuffer beginSingleTimeCommandBuffer();
 	void endSingleTimeCommandBuffer(vk::CommandBuffer buffer);

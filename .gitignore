@@ -12,6 +12,7 @@
 build/
 .vscode/
 install/
+models/
 x64/
 CMakeSettings.json
 
@@ -34,3 +35,4 @@ CMakeSettings.json
 *.exe
 *.out
 *.app
+/models

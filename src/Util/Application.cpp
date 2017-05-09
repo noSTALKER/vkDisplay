@@ -1,6 +1,8 @@
 #include "Application.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#define TINYOBJLOADER_IMPLEMENTATION
+#include "tiny_obj_loader.h"
 #include <iostream>
 #include <chrono>
 
@@ -538,6 +540,47 @@ Application::createImage(const std::string& filename)
 	image.depth = 1;
 	image.format = vk::Format::eR8G8B8A8Unorm;
 	return image;
+}
+
+Model Application::createModel(const std::string & filename)
+{
+	tinyobj::attrib_t attributes;
+	std::vector<tinyobj::shape_t> shapes;
+	std::vector<tinyobj::material_t> materials;
+	std::string errors;
+
+	tinyobj::LoadObj(&attributes, &shapes, &materials, &errors, filename.c_str(), nullptr, true);
+	Model model;
+	model.hasNormal = false;
+	model.hasTexCoord = false;
+	uint32_t stride = 3;
+	if (model.hasNormal)
+		stride += 3;
+	if (model.hasTexCoord)
+		stride += 2;
+
+	model.data.resize(attributes.vertices.size());
+
+	for (std::size_t i = 0; i < attributes.vertices.size() / 3; i++) {
+		model.data[stride * i] = attributes.vertices[3 * i];
+		model.data[stride * i + 1] = attributes.vertices[3 * i + 1];
+		model.data[stride * i + 2] = attributes.vertices[3 * i + 2];
+	}
+
+	uint32_t size = 0;
+	for (auto& shape : shapes) {
+		size += shape.mesh.indices.size();
+	}
+
+	model.indices.resize (size);
+
+	uint32_t j = 0;
+	for (auto& shape : shapes) {
+		for (auto& index : shape.mesh.indices)
+			model.indices[j++] = index.vertex_index;
+	}
+
+	return model;
 }
 
 vk::DeviceMemory 

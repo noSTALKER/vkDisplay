@@ -17,7 +17,6 @@
 #include <fstream>
 
 #include "Util/Application.h"
-#include "Util/Matrix4x4.h"
 
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>

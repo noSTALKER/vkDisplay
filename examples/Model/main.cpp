@@ -21,137 +21,79 @@
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-class PushConstantApplication : public vkDisplay::Application
+class ModelApplication : public vkDisplay::Application
 {
 public:
-	PushConstantApplication() {}
+	ModelApplication() {}
 	vk::Result createResources() override;
 	vk::Result createPipeline() override;
 	vk::Result createCommandBuffers() override;
 	void render(double frameTime, double totalTime) override;
 private:
 	std::vector<vk::CommandBuffer> mCommandBuffers;
-	vkDisplay::Buffer mCubeBuffer;
+	vkDisplay::Model mModel;
+	vkDisplay::Buffer mModelBuffer;
+	vkDisplay::Buffer mIndexBuffer;
+	vkDisplay::Buffer mUniformBuffer;
 	vk::Pipeline mPipeline;
 	vk::PipelineLayout mPipelineLayout;
-	vk::Image mImage;
-	vk::ImageView mImageView;
-	vk::Sampler mSampler;
 	vk::DescriptorSetLayout mDescriptorSetLayout;
 	vk::Semaphore mRenderFinishSemaphore;
 	vk::Semaphore mImageAquireSemaphore;
+	glm::mat4x4 mMVP;
+
 };
 
 vk::Result
-PushConstantApplication::createResources()
+ModelApplication::createResources()
 {
 	vk::Result result;
 
+	mUniformBuffer = createCoherantBuffer(&mMVP, sizeof(mMVP), vk::BufferUsageFlagBits::eUniformBuffer);
+
 	//buffer data
-	struct BufferData {
-		float vertexData[180] = {
-		 // left face
-		 -1, 1, 1, 0.f, 1.f,    // lft-btm-back
-		 -1, -1, -1, 1.f, 0.f,  // lft-top-front
-		 -1, -1, 1, 0.f, 0.f,   // lft-top-back
-		 -1, -1, -1,1.f, 0.f,  // lft-top-front
-		 -1, 1, 1, 0.f, 1.f,    // lft-btm-back
-		 -1, 1, -1, 1.f, 1.f,   // lft-btm-front
-		// front face
-		 1, -1, -1, 1.f, 0.f,   // rgt-top-front
-		 -1, -1, -1, 0.f, 0.f,  // lft-top-front
-		 1, 1, -1, 1.f, 1.f,    // rgt-btm-front
-		 1, 1, -1, 1.f, 1.f,    // rgt-btm-front
-		 -1, -1, -1, 0.f, 0.f,  // lft-top-front
-		 -1, 1, -1, 0.f, 1.f,   // lft-btm-front
-	     // top face
-		 1, -1, 1, 1.f, 0.f,    // rgt-top-back
-		 -1, -1, -1, 0.f, 1.f,  // lft-top-front
-		 1, -1, -1, 1.f, 1.f,   // rgt-top-front
-		 -1, -1, 1, 0.f, 0.f,   // lft-top-back
-		 -1, -1, -1, 0.f, 1.f,  // lft-top-front
-		 1, -1, 1, 1.f, 0.f,    // rgt-top-back
-		 // bottom face
-		 1, 1, 1, 1.f, 1.f,    // rgt-btm-back
-		 -1, 1, -1, 0.f, 0.f,  // lft-btm-front
-		 -1, 1, 1, 0.f, 1.f,   // lft-btm-back
-		 1, 1, -1, 1.f, 0.f,   // rgt-btm-front
-		 -1, 1, -1, 0.f, 0.f,  // lft-btm-front
-		 1, 1, 1, 1.f, 1.f,    // rgt-btm-back
-		// right face
-		 1, -1, 1, 1.f, 0.f,   // rgt-top-back
-		 1, 1, -1, 0.f, 1.f,   // rgt-btm-front
-		 1, 1, 1, 1.f, 1.f,    // rgt-btm-back
-		 1, 1, -1, 0.f, 1.f,   // rgt-btm-front
-		 1, -1, 1, 1.f, 0.f,   // rgt-top-back
-		 1, -1, -1, 0.f, 0.f,  // rgt-top-front
-		// back face
-		 1, 1, 1, 0.f, 1.f,    // rgt-btm-back
-		 -1, 1, 1, 1.f, 1.f,   // lft-btm-back
-		 -1, -1, 1, 1.f, 0.f,  // lft-top-back
-		 1, 1, 1, 0.f, 1.f,    // rgt-btm-back
-		 -1, -1, 1, 1.f, 0.f,  // lft-top-back
-		 1, -1, 1, 0.f, 0.f };   // rgt-top-back
-	} bufferData;
+	mModel = createModel("../models/dragon/dragon.obj");
 
-	mCubeBuffer = createDeviceBuffer(&bufferData,
-		sizeof(bufferData),
+	mModelBuffer = createDeviceBuffer(mModel.data.data(),
+		mModel.data.size() * sizeof(float),
 		vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst);
-
-	vkDisplay::Image image = createImage("../images/sample.jpg");
-	mImage = image.image;
-
-	vk::ImageSubresourceRange imageViewRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
-
-	vk::ImageViewCreateInfo imageViewCreateInfo({}, mImage, vk::ImageViewType::e2D, vk::Format::eR8G8B8A8Unorm, vk::ComponentMapping(), imageViewRange);
-	std::tie(result, mImageView) = mDevice.createImageView(imageViewCreateInfo);
-
-	vk::SamplerCreateInfo samplerCreateInfo({},
-		vk::Filter::eLinear,
-		vk::Filter::eLinear,
-		vk::SamplerMipmapMode::eLinear,
-		vk::SamplerAddressMode::eRepeat,
-		vk::SamplerAddressMode::eRepeat,
-		vk::SamplerAddressMode::eRepeat,
-		0,
-		VK_TRUE,
-		4,
-		VK_FALSE,
-		vk::CompareOp::eNever,
-		0,
-		0,
-		vk::BorderColor::eFloatOpaqueBlack,
-		VK_FALSE);
-	std::tie(result, mSampler) = mDevice.createSampler(samplerCreateInfo);
+	mIndexBuffer = createDeviceBuffer(mModel.indices.data(), mModel.indices.size() * sizeof(uint32_t), vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst);
 
 	return vk::Result::eSuccess;
 }
 
 vk::Result
-PushConstantApplication::createPipeline()
+ModelApplication::createPipeline()
 {
 	vk::Result result;
-	vk::VertexInputBindingDescription vertexBinding(0, sizeof(float) * 5, vk::VertexInputRate::eVertex);
+	uint32_t stride = 3;
+	if (mModel.hasNormal)
+		stride += 3;
+	if (mModel.hasTexCoord)
+		stride += 2;
 
-	//two vertex input attachments, position at location 0 and tex coord at location 1 
-	vk::VertexInputAttributeDescription vertexAttributes[2];
+	vk::VertexInputBindingDescription vertexBinding(0, sizeof(float) * stride, vk::VertexInputRate::eVertex);
+
+	//two vertex input attachments, position at location 0 
+	vk::VertexInputAttributeDescription vertexAttributes[1];
 	vk::VertexInputAttributeDescription& positionAttribute = vertexAttributes[0];
 	positionAttribute.format = vk::Format::eR32G32B32Sfloat;
 	positionAttribute.location = 0;
 	positionAttribute.offset = 0;
 	positionAttribute.binding = vertexBinding.binding;
 
-	vk::VertexInputAttributeDescription& texCoordAttribute = vertexAttributes[1];
-	texCoordAttribute.format = vk::Format::eR32G32Sfloat;
-	texCoordAttribute.location = 1;
-	texCoordAttribute.offset = 3 * sizeof(float);
-	texCoordAttribute.binding = vertexBinding.binding;
-
-	vk::DescriptorSetLayoutBinding samplerLayoutBinding(0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment);
-	vk::DescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo({}, 1, &samplerLayoutBinding);
+	//
+	vk::DescriptorSetLayoutBinding descriptorSetLayoutBinding[1];
+	vk::DescriptorSetLayoutBinding& uniformLayoutBinding = descriptorSetLayoutBinding[0];
+	uniformLayoutBinding.binding = 0;
+	uniformLayoutBinding.descriptorType = vk::DescriptorType::eUniformBuffer;
+	uniformLayoutBinding.stageFlags = vk::ShaderStageFlagBits::eVertex;
+	uniformLayoutBinding.descriptorCount = 1;
+	
+	vk::DescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo({}, 1, descriptorSetLayoutBinding);
 	std::tie(result, mDescriptorSetLayout) = mDevice.createDescriptorSetLayout(descriptorSetLayoutCreateInfo);
 
-	std::fstream vertexFile("../shaders/PushConstant/basic.vert.spv", std::ios::binary | std::ios::in);
+	std::fstream vertexFile("../shaders/Model/basic.vert.spv", std::ios::binary | std::ios::in);
 	vertexFile.seekg(0, std::ios::end);
 	std::size_t vertexSize = vertexFile.tellg();
 	vertexFile.seekg(0, std::ios::beg);
@@ -161,7 +103,7 @@ PushConstantApplication::createPipeline()
 
 	vertexFile.close();
 
-	std::fstream fragmentFile("../shaders/PushConstant/basic.frag.spv", std::ios::binary | std::ios::in);
+	std::fstream fragmentFile("../shaders/Model/basic.frag.spv", std::ios::binary | std::ios::in);
 	fragmentFile.seekg(0, std::ios::end);
 	std::size_t fragmentSize = fragmentFile.tellg();
 	fragmentFile.seekg(0, std::ios::beg);
@@ -193,16 +135,13 @@ PushConstantApplication::createPipeline()
 	fragmentShaderInfo.module = fragmentShaderModule;
 
 	//vertex attribute input info
-	vk::PipelineVertexInputStateCreateInfo vertexInputInfo({}, 1, &vertexBinding, 2, vertexAttributes);
+	vk::PipelineVertexInputStateCreateInfo vertexInputInfo({}, 1, &vertexBinding, 1, vertexAttributes);
 
 	//input assembly info
 	vk::PipelineInputAssemblyStateCreateInfo inputAssemblyInfo({}, vk::PrimitiveTopology::eTriangleList, VK_FALSE);
 
-	//Push Constant Info
-	vk::PushConstantRange pushConstantRange{ vk::ShaderStageFlagBits::eVertex, 0, sizeof(glm::mat4x4) };
-
 	//viewport info
-	vk::Viewport viewport(0, 0, static_cast<float>(mSwapchainExtent.width), static_cast<float>(mSwapchainExtent.height), 0.0f, 1.0f);
+	vk::Viewport viewport(0, 0, mSwapchainExtent.width, mSwapchainExtent.height, 0.0f, 1.0f);
 	vk::Rect2D scissor({ 0, 0 }, mSwapchainExtent);
 	vk::PipelineViewportStateCreateInfo viewportInfo({}, 1, &viewport, 1, &scissor);
 
@@ -221,7 +160,7 @@ PushConstantApplication::createPipeline()
 	vk::PipelineColorBlendStateCreateInfo colorBlendInfo({}, VK_FALSE, vk::LogicOp::eNoOp, 1, &colorBlendAttachment);
 
 	//pipeline layout
-	vk::PipelineLayoutCreateInfo pipelineLayoutCreateInfo({}, 1, &mDescriptorSetLayout, 1, &pushConstantRange);
+	vk::PipelineLayoutCreateInfo pipelineLayoutCreateInfo({}, 1, &mDescriptorSetLayout, 0, nullptr);
 	std::tie(result, mPipelineLayout) = mDevice.createPipelineLayout(pipelineLayoutCreateInfo);
 
 	vk::GraphicsPipelineCreateInfo pipelineCreateInfo({}, 2, shaderStageInfos, &vertexInputInfo, &inputAssemblyInfo, nullptr, &viewportInfo, &rasterizationInfo, &multisampleInfo, &depthStencilInfo, &colorBlendInfo, nullptr, mPipelineLayout, mRenderpass, 0);
@@ -232,29 +171,19 @@ PushConstantApplication::createPipeline()
 }
 
 vk::Result
-PushConstantApplication::createCommandBuffers()
+ModelApplication::createCommandBuffers()
 {
 	vk::Result result;
-
-	const glm::vec3 eye(0, -2, -5);
-	const glm::vec3 up(0, 1, 0);
-	const glm::vec3 center(0, 0, 0);
-
-	constexpr float angle = glm::radians(45.0f);
-	glm::mat4x4 modelMatrix = glm::rotate(glm::mat4x4(), angle, glm::vec3(0, 1, 0));
-	glm::mat4x4 lookMatrix = glm::lookAt(eye, center, up);
-	glm::mat4x4 projectionMatrix = glm::perspective(glm::radians(60.0f), (float)mSwapchainExtent.width / (float)mSwapchainExtent.height, 1.0f, 100.0f);
-	glm::mat4x4 MVP = projectionMatrix * lookMatrix * modelMatrix;
-
 	//create command buffer equal to the swapchain images
 	vk::CommandBufferAllocateInfo renderCommandBuffersCreateInfo(mCommandPool, vk::CommandBufferLevel::ePrimary, mSwapchainImageViews.size());
 	std::tie(result, mCommandBuffers) = mDevice.allocateCommandBuffers(renderCommandBuffersCreateInfo);
 
-	vk::DescriptorPoolSize samplerPoolSize;
-	samplerPoolSize.descriptorCount = 1;
-	samplerPoolSize.type = vk::DescriptorType::eCombinedImageSampler;
+	vk::DescriptorPoolSize poolSize[1];
+	vk::DescriptorPoolSize& uniformPoolSize = poolSize[0];
+	uniformPoolSize.descriptorCount = 1;
+	uniformPoolSize.type = vk::DescriptorType::eUniformBuffer;
 
-	vk::DescriptorPoolCreateInfo descriptorPoolCreateInfo({}, 1, 1, &samplerPoolSize);
+	vk::DescriptorPoolCreateInfo descriptorPoolCreateInfo({}, 1, 1, poolSize);
 
 	vk::DescriptorPool descriptorPool;
 	std::tie(result, descriptorPool) = mDevice.createDescriptorPool(descriptorPoolCreateInfo);
@@ -262,9 +191,17 @@ PushConstantApplication::createCommandBuffers()
 	std::vector<vk::DescriptorSet> sets;
 	std::tie(result, sets) = mDevice.allocateDescriptorSets(allocateInfo);
 
-	vk::DescriptorImageInfo imageInfo(mSampler, mImageView, vk::ImageLayout::eShaderReadOnlyOptimal);
-	vk::WriteDescriptorSet samplerWrite(sets[0], 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo);
-	mDevice.updateDescriptorSets(1, &samplerWrite, 0, nullptr);
+	vk::DescriptorBufferInfo bufferInfo(mUniformBuffer.buffer, 0, mUniformBuffer.size);
+	vk::WriteDescriptorSet writeDescriptorSet[1];
+	vk::WriteDescriptorSet& bufferWrite = writeDescriptorSet[0];
+	bufferWrite.dstSet = sets[0];
+	bufferWrite.descriptorCount = 1;
+	bufferWrite.dstArrayElement = 0;
+	bufferWrite.dstBinding = 0;
+	bufferWrite.descriptorType = vk::DescriptorType::eUniformBuffer; 
+	bufferWrite.pBufferInfo = &bufferInfo;
+
+	mDevice.updateDescriptorSets(1, writeDescriptorSet, 0, nullptr);
 
 	//
 	vk::Rect2D renderArea({ 0, 0 }, mSwapchainExtent);
@@ -285,15 +222,13 @@ PushConstantApplication::createCommandBuffers()
 		vk::CommandBufferBeginInfo commandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eSimultaneousUse, nullptr);
 		commandBuffer.begin(commandBufferBeginInfo);
 
-		//record the push constants
-		commandBuffer.pushConstants(mPipelineLayout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(MVP), &MVP);
-
 		vk::RenderPassBeginInfo renderpassBeginInfo(mRenderpass, mFramebuffers[i], renderArea, 2, clearValues);
 		commandBuffer.beginRenderPass(renderpassBeginInfo, vk::SubpassContents::eInline);
 		commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, mPipeline);
-		commandBuffer.bindVertexBuffers(0, { mCubeBuffer.buffer }, { 0 });
+		commandBuffer.bindVertexBuffers(0, { mModelBuffer.buffer }, { 0 });
+		commandBuffer.bindIndexBuffer(mIndexBuffer.buffer, 0, vk::IndexType::eUint32);
 		commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, mPipelineLayout, 0, sets, {});
-		commandBuffer.draw(36, 1, 0, 0);
+		commandBuffer.drawIndexed(mModel.indices.size(), 1, 0, 0, 0);
 		commandBuffer.endRenderPass();
 		commandBuffer.end();
 	}
@@ -306,9 +241,23 @@ PushConstantApplication::createCommandBuffers()
 }
 
 void
-PushConstantApplication::render(double frameTime, double totalTime)
+ModelApplication::render(double frameTime, double totalTime)
 {
+	glm::vec3 eye(0, 0, -2);
+	glm::vec3 up(0, -1, 0);
+	glm::vec3 center(0, 0, 0);
+
+	float angle = glm::quarter_pi<float>() * totalTime;
+	glm::mat4x4 modelMatrix = glm::rotate(glm::mat4x4(), angle, glm::vec3(0, 1, 0));
+	glm::mat4x4 lookMatrix = glm::lookAt(eye, center, up);
+	glm::mat4x4 projectionMatrix = glm::perspective(glm::radians(60.0f), (float)mSwapchainExtent.width / (float)mSwapchainExtent.height, 1.0f, 100.0f);
+	mMVP = projectionMatrix * lookMatrix * modelMatrix;
+
+	void* data;
 	vk::Result result;
+	std::tie(result, data) = mDevice.mapMemory(mUniformBuffer.memory, mUniformBuffer.offset, mUniformBuffer.size);
+	memcpy(data, &mMVP, sizeof(mMVP));
+	mDevice.unmapMemory(mUniformBuffer.memory);
 
 	uint32_t currentSwapchainImage;
 	std::tie(result, currentSwapchainImage) = mDevice.acquireNextImageKHR(mSwapchain, 10000000, mImageAquireSemaphore, vk::Fence());
@@ -328,10 +277,10 @@ int main()
 	int width = 800, height = 600;
 	vk::Result result;
 
-	PushConstantApplication application;
-	result = application.createInstance("Push Constant", VK_MAKE_VERSION(1, 0, 0));
+	ModelApplication application;
+	result = application.createInstance("Model", VK_MAKE_VERSION(1, 0, 0));
 	result = application.createDevice();
-	application.createWindow("Push Constant", 800, 600);
+	application.createWindow("Model", 800, 600);
 	result = application.createSwapchain();
 	result = application.createDepthStencilBuffer(vk::Format::eD24UnormS8Uint);
 	result = application.createResources();
