@@ -51,47 +51,47 @@ InstancingApplication::createResources()
 	struct BufferData {
 		float vertexData[180] = {
 		 // left face
-		 -1, 1, 1, 0.f, 1.f,    // lft-btm-back
-		 -1, -1, -1, 1.f, 0.f,  // lft-top-front
-		 -1, -1, 1, 0.f, 0.f,   // lft-top-back
-		 -1, -1, -1,1.f, 0.f,  // lft-top-front
-		 -1, 1, 1, 0.f, 1.f,    // lft-btm-back
-		 -1, 1, -1, 1.f, 1.f,   // lft-btm-front
+		 -1, 1, 1, 0.f, 0.f,    // lft-btm-back
+		 -1, -1, -1, 1.f, 1.f,  // lft-top-front
+		 -1, -1, 1, 0.f, 1.f,   // lft-top-back
+		 -1, -1, -1, 1.f, 1.f,  // lft-top-front
+		 -1, 1, 1, 0.f, 0.f,    // lft-btm-back
+		 -1, 1, -1, 1.f, 0.f,   // lft-btm-front
 		// front face
-		 1, -1, -1, 1.f, 0.f,   // rgt-top-front
-		 -1, -1, -1, 0.f, 0.f,  // lft-top-front
-		 1, 1, -1, 1.f, 1.f,    // rgt-btm-front
-		 1, 1, -1, 1.f, 1.f,    // rgt-btm-front
-		 -1, -1, -1, 0.f, 0.f,  // lft-top-front
-		 -1, 1, -1, 0.f, 1.f,   // lft-btm-front
-	     // top face
-		 1, -1, 1, 1.f, 0.f,    // rgt-top-back
-		 -1, -1, -1, 0.f, 1.f,  // lft-top-front
 		 1, -1, -1, 1.f, 1.f,   // rgt-top-front
-		 -1, -1, 1, 0.f, 0.f,   // lft-top-back
 		 -1, -1, -1, 0.f, 1.f,  // lft-top-front
-		 1, -1, 1, 1.f, 0.f,    // rgt-top-back
+		 1, 1, -1, 1.f, 0.f,    // rgt-btm-front
+		 1, 1, -1, 1.f, 0.f,    // rgt-btm-front
+		 -1, -1, -1, 0.f, 1.f,  // lft-top-front
+		 -1, 1, -1, 0.f, 0.f,   // lft-btm-front
+	     // top face
+		 1, -1, 1, 1.f, 1.f,    // rgt-top-back
+		 -1, -1, -1, 0.f, 0.f,  // lft-top-front
+		 1, -1, -1, 1.f, 0.f,   // rgt-top-front
+		 -1, -1, 1, 0.f, 1.f,   // lft-top-back
+		 -1, -1, -1, 0.f, 0.f,  // lft-top-front
+		 1, -1, 1, 1.f, 1.f,    // rgt-top-back
 		 // bottom face
-		 1, 1, 1, 1.f, 1.f,    // rgt-btm-back
-		 -1, 1, -1, 0.f, 0.f,  // lft-btm-front
-		 -1, 1, 1, 0.f, 1.f,   // lft-btm-back
-		 1, 1, -1, 1.f, 0.f,   // rgt-btm-front
-		 -1, 1, -1, 0.f, 0.f,  // lft-btm-front
-		 1, 1, 1, 1.f, 1.f,    // rgt-btm-back
+		 1, 1, 1, 1.f, 0.f,    // rgt-btm-back
+		 -1, 1, -1, 0.f, 1.f,  // lft-btm-front
+		 -1, 1, 1, 0.f, 0.f,   // lft-btm-back
+		 1, 1, -1, 1.f, 1.f,   // rgt-btm-front
+		 -1, 1, -1, 0.f, 1.f,  // lft-btm-front
+		 1, 1, 1, 1.f, 0.f,    // rgt-btm-back
 		// right face
-		 1, -1, 1, 1.f, 0.f,   // rgt-top-back
-		 1, 1, -1, 0.f, 1.f,   // rgt-btm-front
-		 1, 1, 1, 1.f, 1.f,    // rgt-btm-back
-		 1, 1, -1, 0.f, 1.f,   // rgt-btm-front
-		 1, -1, 1, 1.f, 0.f,   // rgt-top-back
-		 1, -1, -1, 0.f, 0.f,  // rgt-top-front
+		 1, -1, 1, 1.f, 1.f,   // rgt-top-back
+		 1, 1, -1, 0.f, 0.f,   // rgt-btm-front
+		 1, 1, 1, 1.f, 0.f,    // rgt-btm-back
+		 1, 1, -1, 0.f, 0.f,   // rgt-btm-front
+		 1, -1, 1, 1.f, 1.f,   // rgt-top-back
+		 1, -1, -1, 0.f, 1.f,  // rgt-top-front
 		// back face
-		 1, 1, 1, 0.f, 1.f,    // rgt-btm-back
-		 -1, 1, 1, 1.f, 1.f,   // lft-btm-back
-		 -1, -1, 1, 1.f, 0.f,  // lft-top-back
-		 1, 1, 1, 0.f, 1.f,    // rgt-btm-back
-		 -1, -1, 1, 1.f, 0.f,  // lft-top-back
-		 1, -1, 1, 0.f, 0.f };   // rgt-top-back
+		 1, 1, 1, 0.f, 0.f,    // rgt-btm-back
+		 -1, 1, 1, 1.f, 0.f,   // lft-btm-back
+		 -1, -1, 1, 1.f, 1.f,  // lft-top-back
+		 1, 1, 1, 0.f, 0.f,    // rgt-btm-back
+		 -1, -1, 1, 1.f, 1.f,  // lft-top-back
+		 1, -1, 1, 0.f, 1.f };   // rgt-top-back
 	} bufferData;
 
 	mCubeBuffer = createDeviceBuffer(&bufferData,
@@ -237,7 +237,7 @@ InstancingApplication::createCommandBuffers()
 	vk::Result result;
 
 	const glm::vec3 eye(0.f, 0.f, -10.f);
-	const glm::vec3 up(0.f, 1.f, 0.f);
+	const glm::vec3 up(0.f, -1.f, 0.f);
 	const glm::vec3 center(0.f, 0.f, 0.f);
 
 	glm::mat4x4 lookMatrix = glm::lookAt(eye, center, up);

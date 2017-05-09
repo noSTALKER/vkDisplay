@@ -55,47 +55,47 @@ UniformBufferApplication::createResources()
 	struct BufferData {
 		float vertexData[180] = {
 		 // left face
-		 -1, 1, 1, 0.f, 1.f,    // lft-btm-back
-		 -1, -1, -1, 1.f, 0.f,  // lft-top-front
-		 -1, -1, 1, 0.f, 0.f,   // lft-top-back
-		 -1, -1, -1,1.f, 0.f,  // lft-top-front
-		 -1, 1, 1, 0.f, 1.f,    // lft-btm-back
-		 -1, 1, -1, 1.f, 1.f,   // lft-btm-front
+		 -1, 1, 1, 0.f, 0.f,    // lft-btm-back
+		 -1, -1, -1, 1.f, 1.f,  // lft-top-front
+		 -1, -1, 1, 0.f, 1.f,   // lft-top-back
+		 -1, -1, -1, 1.f, 1.f,  // lft-top-front
+		 -1, 1, 1, 0.f, 0.f,    // lft-btm-back
+		 -1, 1, -1, 1.f, 0.f,   // lft-btm-front
 		// front face
-		 1, -1, -1, 1.f, 0.f,   // rgt-top-front
-		 -1, -1, -1, 0.f, 0.f,  // lft-top-front
-		 1, 1, -1, 1.f, 1.f,    // rgt-btm-front
-		 1, 1, -1, 1.f, 1.f,    // rgt-btm-front
-		 -1, -1, -1, 0.f, 0.f,  // lft-top-front
-		 -1, 1, -1, 0.f, 1.f,   // lft-btm-front
-	     // top face
-		 1, -1, 1, 1.f, 0.f,    // rgt-top-back
-		 -1, -1, -1, 0.f, 1.f,  // lft-top-front
 		 1, -1, -1, 1.f, 1.f,   // rgt-top-front
-		 -1, -1, 1, 0.f, 0.f,   // lft-top-back
 		 -1, -1, -1, 0.f, 1.f,  // lft-top-front
-		 1, -1, 1, 1.f, 0.f,    // rgt-top-back
+		 1, 1, -1, 1.f, 0.f,    // rgt-btm-front
+		 1, 1, -1, 1.f, 0.f,    // rgt-btm-front
+		 -1, -1, -1, 0.f, 1.f,  // lft-top-front
+		 -1, 1, -1, 0.f, 0.f,   // lft-btm-front
+	     // top face
+		 1, -1, 1, 1.f, 1.f,    // rgt-top-back
+		 -1, -1, -1, 0.f, 0.f,  // lft-top-front
+		 1, -1, -1, 1.f, 0.f,   // rgt-top-front
+		 -1, -1, 1, 0.f, 1.f,   // lft-top-back
+		 -1, -1, -1, 0.f, 0.f,  // lft-top-front
+		 1, -1, 1, 1.f, 1.f,    // rgt-top-back
 		 // bottom face
-		 1, 1, 1, 1.f, 1.f,    // rgt-btm-back
-		 -1, 1, -1, 0.f, 0.f,  // lft-btm-front
-		 -1, 1, 1, 0.f, 1.f,   // lft-btm-back
-		 1, 1, -1, 1.f, 0.f,   // rgt-btm-front
-		 -1, 1, -1, 0.f, 0.f,  // lft-btm-front
-		 1, 1, 1, 1.f, 1.f,    // rgt-btm-back
+		 1, 1, 1, 1.f, 0.f,    // rgt-btm-back
+		 -1, 1, -1, 0.f, 1.f,  // lft-btm-front
+		 -1, 1, 1, 0.f, 0.f,   // lft-btm-back
+		 1, 1, -1, 1.f, 1.f,   // rgt-btm-front
+		 -1, 1, -1, 0.f, 1.f,  // lft-btm-front
+		 1, 1, 1, 1.f, 0.f,    // rgt-btm-back
 		// right face
-		 1, -1, 1, 1.f, 0.f,   // rgt-top-back
-		 1, 1, -1, 0.f, 1.f,   // rgt-btm-front
-		 1, 1, 1, 1.f, 1.f,    // rgt-btm-back
-		 1, 1, -1, 0.f, 1.f,   // rgt-btm-front
-		 1, -1, 1, 1.f, 0.f,   // rgt-top-back
-		 1, -1, -1, 0.f, 0.f,  // rgt-top-front
+		 1, -1, 1, 1.f, 1.f,   // rgt-top-back
+		 1, 1, -1, 0.f, 0.f,   // rgt-btm-front
+		 1, 1, 1, 1.f, 0.f,    // rgt-btm-back
+		 1, 1, -1, 0.f, 0.f,   // rgt-btm-front
+		 1, -1, 1, 1.f, 1.f,   // rgt-top-back
+		 1, -1, -1, 0.f, 1.f,  // rgt-top-front
 		// back face
-		 1, 1, 1, 0.f, 1.f,    // rgt-btm-back
-		 -1, 1, 1, 1.f, 1.f,   // lft-btm-back
-		 -1, -1, 1, 1.f, 0.f,  // lft-top-back
-		 1, 1, 1, 0.f, 1.f,    // rgt-btm-back
-		 -1, -1, 1, 1.f, 0.f,  // lft-top-back
-		 1, -1, 1, 0.f, 0.f };   // rgt-top-back
+		 1, 1, 1, 0.f, 0.f,    // rgt-btm-back
+		 -1, 1, 1, 1.f, 0.f,   // lft-btm-back
+		 -1, -1, 1, 1.f, 1.f,  // lft-top-back
+		 1, 1, 1, 0.f, 0.f,    // rgt-btm-back
+		 -1, -1, 1, 1.f, 1.f,  // lft-top-back
+		 1, -1, 1, 0.f, 1.f };   // rgt-top-back
 	} bufferData;
 
 	mCubeBuffer = createDeviceBuffer(&bufferData,
@@ -330,8 +330,8 @@ UniformBufferApplication::createCommandBuffers()
 void
 UniformBufferApplication::render(double frameTime, double totalTime)
 {
-	glm::vec3 eye(0, -2, -5);
-	glm::vec3 up(0, 1, 0);
+	glm::vec3 eye(0, 2, -5);
+	glm::vec3 up(0, -1, 0);
 	glm::vec3 center(0, 0, 0);
 
 	float angle = glm::quarter_pi<float>() * totalTime;
