@@ -33,7 +33,6 @@ private:
 	std::vector<vk::CommandBuffer> mCommandBuffers;
 	vkDisplay::Model mModel;
 	vkDisplay::Buffer mModelBuffer;
-	vkDisplay::Buffer mIndexBuffer;
 	vkDisplay::Buffer mUniformBuffer;
 	vk::Pipeline mPipeline;
 	vk::PipelineLayout mPipelineLayout;
@@ -57,7 +56,6 @@ ModelApplication::createResources()
 	mModelBuffer = createDeviceBuffer(mModel.data.data(),
 		mModel.data.size() * sizeof(float),
 		vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst);
-	mIndexBuffer = createDeviceBuffer(mModel.indices.data(), mModel.indices.size() * sizeof(uint32_t), vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst);
 
 	return vk::Result::eSuccess;
 }
@@ -69,18 +67,22 @@ ModelApplication::createPipeline()
 	uint32_t stride = 3;
 	if (mModel.hasNormal)
 		stride += 3;
-	if (mModel.hasTexCoord)
-		stride += 2;
 
 	vk::VertexInputBindingDescription vertexBinding(0, sizeof(float) * stride, vk::VertexInputRate::eVertex);
 
 	//two vertex input attachments, position at location 0 
-	vk::VertexInputAttributeDescription vertexAttributes[1];
+	vk::VertexInputAttributeDescription vertexAttributes[2];
 	vk::VertexInputAttributeDescription& positionAttribute = vertexAttributes[0];
 	positionAttribute.format = vk::Format::eR32G32B32Sfloat;
 	positionAttribute.location = 0;
 	positionAttribute.offset = 0;
 	positionAttribute.binding = vertexBinding.binding;
+
+	vk::VertexInputAttributeDescription& normalAttribute = vertexAttributes[1];
+	normalAttribute.format = vk::Format::eR32G32B32Sfloat;
+	normalAttribute.location = 1;
+	normalAttribute.offset = 3 * sizeof(float);
+	normalAttribute.binding = vertexBinding.binding;
 
 	//
 	vk::DescriptorSetLayoutBinding descriptorSetLayoutBinding[1];
@@ -135,7 +137,7 @@ ModelApplication::createPipeline()
 	fragmentShaderInfo.module = fragmentShaderModule;
 
 	//vertex attribute input info
-	vk::PipelineVertexInputStateCreateInfo vertexInputInfo({}, 1, &vertexBinding, 1, vertexAttributes);
+	vk::PipelineVertexInputStateCreateInfo vertexInputInfo({}, 1, &vertexBinding, 2, vertexAttributes);
 
 	//input assembly info
 	vk::PipelineInputAssemblyStateCreateInfo inputAssemblyInfo({}, vk::PrimitiveTopology::eTriangleList, VK_FALSE);
@@ -226,9 +228,8 @@ ModelApplication::createCommandBuffers()
 		commandBuffer.beginRenderPass(renderpassBeginInfo, vk::SubpassContents::eInline);
 		commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, mPipeline);
 		commandBuffer.bindVertexBuffers(0, { mModelBuffer.buffer }, { 0 });
-		commandBuffer.bindIndexBuffer(mIndexBuffer.buffer, 0, vk::IndexType::eUint32);
 		commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, mPipelineLayout, 0, sets, {});
-		commandBuffer.drawIndexed(mModel.indices.size(), 1, 0, 0, 0);
+		commandBuffer.draw(mModel.vertexCount, 1, 0, 0);
 		commandBuffer.endRenderPass();
 		commandBuffer.end();
 	}

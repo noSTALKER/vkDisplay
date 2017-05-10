@@ -44,6 +44,7 @@ struct UTIL_API Model
 	uint64_t vertexCount;
 	bool hasNormal;
 	bool hasTexCoord;
+	bool hasIndices;
 };
 
 class UTIL_API Application

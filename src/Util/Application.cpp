@@ -551,33 +551,54 @@ Model Application::createModel(const std::string & filename)
 
 	tinyobj::LoadObj(&attributes, &shapes, &materials, &errors, filename.c_str(), nullptr, true);
 	Model model;
-	model.hasNormal = false;
+	model.hasNormal = attributes.normals.size() > 0;
 	model.hasTexCoord = false;
+	model.hasIndices = false;
 	uint32_t stride = 3;
 	if (model.hasNormal)
 		stride += 3;
 	if (model.hasTexCoord)
 		stride += 2;
 
-	model.data.resize(attributes.vertices.size());
 
-	for (std::size_t i = 0; i < attributes.vertices.size() / 3; i++) {
-		model.data[stride * i] = attributes.vertices[3 * i];
-		model.data[stride * i + 1] = attributes.vertices[3 * i + 1];
-		model.data[stride * i + 2] = attributes.vertices[3 * i + 2];
-	}
-
-	uint32_t size = 0;
+	model.vertexCount = 0;
 	for (auto& shape : shapes) {
-		size += shape.mesh.indices.size();
+		model.vertexCount += shape.mesh.indices.size();
 	}
 
-	model.indices.resize (size);
+	uint32_t dataSize = model.vertexCount * 3 * sizeof(float);
+	if (model.hasNormal) {
+		dataSize += model.vertexCount * 3 * sizeof(float);
+	}
+
+	if (model.hasTexCoord) {
+		dataSize += model.vertexCount * 2 * sizeof(float);
+	}
+
+	model.data.resize(dataSize);
 
 	uint32_t j = 0;
 	for (auto& shape : shapes) {
-		for (auto& index : shape.mesh.indices)
-			model.indices[j++] = index.vertex_index;
+		for (auto& index : shape.mesh.indices) {
+			model.data[stride * j] = attributes.vertices[3 * index.vertex_index];
+			model.data[stride * j + 1] = attributes.vertices[3 * index.vertex_index + 1];
+			model.data[stride * j + 2] = attributes.vertices[3 * index.vertex_index + 2];
+			uint32_t offset = 3;
+
+			if (model.hasNormal) {
+				model.data[stride * j + offset] = attributes.normals[3 * index.normal_index];
+				model.data[stride * j + offset + 1] = attributes.normals[3 * index.normal_index + 1];
+				model.data[stride * j + offset + 2] = attributes.normals[3 * index.normal_index + 2];
+				offset += 3;
+			}
+
+			if (model.hasTexCoord) {
+				model.data[stride * j + offset] = attributes.texcoords[2 * index.texcoord_index];
+				model.data[stride * j + offset] = attributes.texcoords[2 * index.texcoord_index + 1];
+			}
+
+			j++;
+		}
 	}
 
 	return model;
