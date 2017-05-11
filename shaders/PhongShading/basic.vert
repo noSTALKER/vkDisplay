@@ -7,16 +7,20 @@ layout (location = 1) in vec3 normal;
 
 layout (std140, binding = 0) uniform ModelInfo {
 	mat4 mvp;
+	mat4 viewModelMatrix;
+	mat4 normalMatrix;
 } modelInfo;
 
 out gl_PerVertex {
 	vec4 gl_Position;
 };
 
-layout (location = 0) out vec4 outNormal;
+layout (location = 0) out vec4 viewNormal;
+layout (location = 1) out vec4 viewPosition;
 
 void main()
 {
 	gl_Position = modelInfo.mvp * vec4(position, 1.0f);
-	outNormal = modelInfo.mvp * vec4(normal, 0.0f);
+	viewNormal = modelInfo.normalMatrix * vec4(normal, 0.0f);
+	viewPosition = modelInfo.viewModelMatrix * vec4(position, 1.0f);
 }
