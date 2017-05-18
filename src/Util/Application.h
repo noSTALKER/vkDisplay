@@ -56,7 +56,7 @@ public:
 	vk::Result createDevice();
 	bool createWindow(const std::string& windowName, int width, int height);
 	vk::Result createSwapchain();
-	vk::Result createDepthStencilBuffer(vk::Format format);
+	vk::Result createDepthStencilBuffer(vk::Format format, vk::SampleCountFlagBits samples = vk::SampleCountFlagBits::e1);
 	Buffer createCoherantBuffer(void * data, uint64_t dataSize, vk::BufferUsageFlags bufferFlags);
 	Buffer createDeviceBuffer(void* data, uint64_t dataSize, vk::BufferUsageFlags bufferFlags);
 	Image createImage(const std::string& filename);
@@ -164,6 +164,7 @@ protected:
 	//Depth-Stencil info
 	vk::Image mDepthStencilImage;
 	vk::ImageView mDepthStencilView;
+	vk::Format mDepthStencilFormat;
 
 	//memory info
 	vk::PhysicalDeviceMemoryProperties mMemoryProperties;

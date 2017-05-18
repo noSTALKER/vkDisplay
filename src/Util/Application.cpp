@@ -113,8 +113,6 @@ Application::createDevice()
 	vk::PhysicalDeviceFeatures deviceFeatures;
 	deviceFeatures.samplerAnisotropy = VK_TRUE;
 	deviceFeatures.fullDrawIndexUint32 = VK_TRUE;
-	deviceFeatures.independentBlend = VK_TRUE;
-	deviceFeatures.shaderResourceMinLod = VK_TRUE;
 
 	//create a logical vulkan device with given queues, layers, extensions and features
 	vk::DeviceCreateInfo deviceCreateInfo({}, 1, &defaultQueueCreateInfo, 0, nullptr, 1, deviceExtensionNames, &deviceFeatures);
@@ -307,9 +305,10 @@ vk::Result Application::createSwapchain()
 	return result;
 }
 
-vk::Result Application::createDepthStencilBuffer(vk::Format format)
+vk::Result Application::createDepthStencilBuffer(vk::Format format, vk::SampleCountFlagBits samples)
 {
 	vk::Result result;
+	mDepthStencilFormat = format;
 
 	//create a image for depth-stencil buffer
 	vk::Extent3D depthImageExtent(mSwapchainExtent.width, mSwapchainExtent.height, 1);
@@ -319,7 +318,7 @@ vk::Result Application::createDepthStencilBuffer(vk::Format format)
 		depthImageExtent,
 		1,
 		1,
-		vk::SampleCountFlagBits::e1,
+		samples,
 		vk::ImageTiling::eOptimal,
 		vk::ImageUsageFlagBits::eDepthStencilAttachment,
 		vk::SharingMode::eExclusive,
