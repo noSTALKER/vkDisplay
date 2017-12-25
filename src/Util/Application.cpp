@@ -42,6 +42,17 @@ Application::Application()
 
 Application::~Application()
 {
+	//
+
+	//destroy depth-stencil resources
+	mDevice.destroyImageView(mDepthStencilView);
+	mDevice.destroyImage(mDepthStencilImage);
+	mDevice.freeMemory(mDepthMemory);
+
+	//destroy
+	mDevice.destroyCommandPool(mCommandPool);
+	mDevice.destroy();
+	mInstance.destroy();
 }
 
 vk::Result
@@ -329,8 +340,8 @@ vk::Result Application::createDepthStencilBuffer(vk::Format format, vk::SampleCo
 	//get the memory requirement for the depth-stencil image
 	auto depthMemoryRequirement = mDevice.getImageMemoryRequirements(mDepthStencilImage);
 	//allocate momory for depth-stencil image
-	vk::DeviceMemory depthMemory = allocateMemory(depthMemoryRequirement, vk::MemoryPropertyFlagBits::eDeviceLocal);
-	mDevice.bindImageMemory(mDepthStencilImage, depthMemory, 0);
+	mDepthMemory = allocateMemory(depthMemoryRequirement, vk::MemoryPropertyFlagBits::eDeviceLocal);
+	mDevice.bindImageMemory(mDepthStencilImage, mDepthMemory, 0);
 
 	//create a view for depth-stencil image
 	vk::ComponentMapping depthComponentMapping(vk::ComponentSwizzle::eR,

@@ -21,10 +21,10 @@
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-class PhongShadingApplication : public vkDisplay::Application
+class PBRTApplication : public vkDisplay::Application
 {
 public:
-	PhongShadingApplication() {}
+	PBRTApplication() {}
 	vk::Result createResources() override;
 	vk::Result createPipeline() override;
 	vk::Result createCommandBuffers() override;
@@ -40,16 +40,13 @@ private:
 
 	struct LightInfo {
 		glm::vec4 direction;
-		glm::vec4 ambient;
-		glm::vec4 diffuse;
-		glm::vec4 specular;
+		glm::vec4 color;
 	};
 
 	struct MaterialInfo {
-		glm::vec4 ambient;
-		glm::vec4 diffuse;
-		glm::vec4 specular;
-		float specularPower;
+		glm::vec4 albedo;
+		float metallic;
+		float roughness;
 	};
 
 	struct Info {
@@ -71,7 +68,7 @@ private:
 };
 
 vk::Result
-PhongShadingApplication::createResources()
+PBRTApplication::createResources()
 {
 	vk::Result result;
 
@@ -88,7 +85,7 @@ PhongShadingApplication::createResources()
 }
 
 vk::Result
-PhongShadingApplication::createPipeline()
+PBRTApplication::createPipeline()
 {
 	vk::Result result;
 	uint32_t stride = 3;
@@ -124,7 +121,7 @@ PhongShadingApplication::createPipeline()
 	vk::DescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo({}, 1, descriptorSetLayoutBinding);
 	std::tie(result, mDescriptorSetLayout) = mDevice.createDescriptorSetLayout(descriptorSetLayoutCreateInfo);
 
-	std::fstream vertexFile("../shaders/PhongShading/basic.vert.spv", std::ios::binary | std::ios::in);
+	std::fstream vertexFile("../shaders/PBRT/basic.vert.spv", std::ios::binary | std::ios::in);
 	vertexFile.seekg(0, std::ios::end);
 	std::size_t vertexSize = vertexFile.tellg();
 	vertexFile.seekg(0, std::ios::beg);
@@ -134,7 +131,7 @@ PhongShadingApplication::createPipeline()
 
 	vertexFile.close();
 
-	std::fstream fragmentFile("../shaders/PhongShading/basic.frag.spv", std::ios::binary | std::ios::in);
+	std::fstream fragmentFile("../shaders/PBRT/basic.frag.spv", std::ios::binary | std::ios::in);
 	fragmentFile.seekg(0, std::ios::end);
 	std::size_t fragmentSize = fragmentFile.tellg();
 	fragmentFile.seekg(0, std::ios::beg);
@@ -202,18 +199,15 @@ PhongShadingApplication::createPipeline()
 }
 
 vk::Result
-PhongShadingApplication::createCommandBuffers()
+PBRTApplication::createCommandBuffers()
 {
-	mInfo.matInfo.ambient = glm::vec4(0.05, 0.05, 0.05, 1);
-	mInfo.matInfo.diffuse = glm::vec4(0.5, 0, 0, 1);
-	mInfo.matInfo.specular = glm::vec4(1, 1, 1, 1);
-	mInfo.matInfo.specularPower = 3;
+	mInfo.matInfo.albedo = glm::vec4(1, 0, 0, 1);
+	mInfo.matInfo.metallic = 0.8;
+	mInfo.matInfo.roughness = 0.1;
 
-	mInfo.lightInfo.ambient = glm::vec4(1, 1, 1, 1);
-	mInfo.lightInfo.diffuse = glm::vec4(1, 1, 1, 1);
-	mInfo.lightInfo.specular = glm::vec4(1, 1, 1, 1);
+	mInfo.lightInfo.color = glm::vec4(1, 1, 1, 1);
 	
-	glm::vec3 eye(0, 0, -2);
+	glm::vec3 eye(0, 0, -1.4);
 	glm::vec3 up(0, -1, 0);
 	glm::vec3 center(0, 0, 0);
 
@@ -292,9 +286,9 @@ PhongShadingApplication::createCommandBuffers()
 }
 
 void
-PhongShadingApplication::render(double frameTime, double totalTime)
+PBRTApplication::render(double frameTime, double totalTime)
 {
-	glm::vec3 eye(0, 0, -2);
+	glm::vec3 eye(0, 0, -1.4);
 	glm::vec3 up(0, -1, 0);
 	glm::vec3 center(0, 0, 0);
 
@@ -330,10 +324,10 @@ int main()
 	int width = 800, height = 600;
 	vk::Result result;
 
-	PhongShadingApplication application;
-	result = application.createInstance("Phong Shading", VK_MAKE_VERSION(1, 0, 0));
+	PBRTApplication application;
+	result = application.createInstance("PBRT", VK_MAKE_VERSION(1, 0, 0));
 	result = application.createDevice();
-	application.createWindow("Phong Shading", 800, 600);
+	application.createWindow("PBRT", 800, 600);
 	result = application.createSwapchain();
 	result = application.createDepthStencilBuffer(vk::Format::eD24UnormS8Uint);
 	result = application.createResources();

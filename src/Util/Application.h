@@ -165,6 +165,7 @@ protected:
 	vk::Image mDepthStencilImage;
 	vk::ImageView mDepthStencilView;
 	vk::Format mDepthStencilFormat;
+	vk::DeviceMemory mDepthMemory;
 
 	//memory info
 	vk::PhysicalDeviceMemoryProperties mMemoryProperties;
